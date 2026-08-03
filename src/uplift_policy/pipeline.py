@@ -22,6 +22,14 @@ from .data import (
 from .evaluation import aipw_scores, binary_ate, paired_row_bootstrap, qini_curve
 
 
+_POLICY_COLORS = {
+    "random": "#777777",
+    "response": "#D55E00",
+    "t_learner": "#0072B2",
+    "dr_learner": "#009E73",
+}
+
+
 def _paths(config: Mapping[str, Any]) -> tuple[Path, Path, Path, Path]:
     raw = Path(config["paths"]["raw_data"])
     processed = Path(config["paths"]["processed_data"])
@@ -453,25 +461,25 @@ def _qini_tables(
 def _plot_policy_values(values: pd.DataFrame, output: Path) -> list[Path]:
     plt = _pyplot()
 
-    colors = {
-        "random": "#777777",
-        "response": "#D55E00",
-        "t_learner": "#0072B2",
-        "dr_learner": "#009E73",
-    }
     outcomes = list(dict.fromkeys(values["outcome"]))
     figure, axes = plt.subplots(1, len(outcomes), figsize=(11.0, 4.2), squeeze=False)
     for axis, outcome in zip(axes[0], outcomes, strict=True):
         subset = values.loc[values["outcome"].eq(outcome)]
-        for policy in colors:
+        for policy in _POLICY_COLORS:
             rows = subset.loc[subset["name"].eq(policy)].sort_values("capacity")
             x = rows["capacity"].to_numpy() * 100.0
-            axis.plot(x, rows["estimate"], marker="o", label=policy, color=colors[policy])
+            axis.plot(
+                x,
+                rows["estimate"],
+                marker="o",
+                label=policy.replace("_", " "),
+                color=_POLICY_COLORS[policy],
+            )
             axis.fill_between(
                 x,
                 rows["ci_lower"],
                 rows["ci_upper"],
-                color=colors[policy],
+                color=_POLICY_COLORS[policy],
                 alpha=0.14,
             )
         axis.axhline(0.0, color="0.25", linewidth=0.8)
@@ -480,7 +488,14 @@ def _plot_policy_values(values: pd.DataFrame, output: Path) -> list[Path]:
         axis.spines[["top", "right"]].set_visible(False)
     axes[0, 0].set_ylabel("Incremental outcomes per test row")
     axes[0, -1].legend(frameon=False)
-    figure.tight_layout()
+    figure.text(
+        0.5,
+        0.01,
+        "Shading: pointwise 95% percentile intervals from the paired row bootstrap.",
+        ha="center",
+        fontsize=8,
+    )
+    figure.tight_layout(rect=(0.0, 0.05, 1.0, 1.0))
     outputs = _save_figure(figure, output, pdf=True)
     plt.close(figure)
     return outputs
@@ -502,7 +517,14 @@ def _plot_contrasts(contrasts: pd.DataFrame, output: Path) -> list[Path]:
     axis.set_title("Paired policy-value contrasts")
     axis.legend(frameon=False, fontsize=8)
     axis.spines[["top", "right"]].set_visible(False)
-    figure.tight_layout()
+    figure.text(
+        0.5,
+        0.01,
+        "Shading: pointwise 95% percentile intervals from the paired row bootstrap.",
+        ha="center",
+        fontsize=8,
+    )
+    figure.tight_layout(rect=(0.0, 0.05, 1.0, 1.0))
     outputs = _save_figure(figure, output, pdf=True)
     plt.close(figure)
     return outputs
@@ -514,7 +536,12 @@ def _plot_qini(curves: pd.DataFrame, output: Path) -> list[Path]:
     figure, axis = plt.subplots(figsize=(7.2, 4.8))
     for policy in dict.fromkeys(curves["policy"]):
         rows = curves.loc[curves["policy"].eq(policy)].sort_values("fraction")
-        axis.plot(rows["fraction"] * 100.0, rows["centered_qini"], label=policy)
+        axis.plot(
+            rows["fraction"] * 100.0,
+            rows["centered_qini"],
+            label=policy.replace("_", " "),
+            color=_POLICY_COLORS[policy],
+        )
     axis.axhline(0.0, color="0.25", linewidth=0.8)
     axis.set_xlabel("Targeted fraction (%)")
     axis.set_ylabel("Centered IPW conversion gain per test row")
