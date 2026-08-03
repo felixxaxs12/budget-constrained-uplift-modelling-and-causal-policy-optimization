@@ -105,7 +105,9 @@ def validate_source(config: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError(f"Unexpected source header: {header}")
 
     finite_expression = " AND ".join(f"{name} IS NOT NULL AND isfinite({name})" for name in SOURCE_COLUMNS[:12])
-    binary_expression = " AND ".join(f"{name} IN (0, 1)" for name in BINARY_COLUMNS)
+    binary_expression = " AND ".join(
+        f"({name} IS NOT NULL AND {name} IN (0, 1))" for name in BINARY_COLUMNS
+    )
     query = f"""
         WITH source AS ({_source_scan_sql()})
         SELECT

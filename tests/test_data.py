@@ -47,6 +47,25 @@ def test_official_source_has_explicit_schema_and_stable_ordinality() -> None:
     assert all(str(dtype) == "uint8" for dtype in frame.iloc[:, 13:].dtypes)
 
 
+def test_binary_domain_contract_rejects_null() -> None:
+    expression = " AND ".join(
+        f"({name} IS NOT NULL AND {name} IN (0, 1))"
+        for name in ("treatment", "conversion", "visit", "exposure")
+    )
+    connection = duckdb.connect()
+    try:
+        valid = connection.execute(
+            f"""
+            SELECT bool_and({expression})
+            FROM (VALUES (0, 0, 0, 0), (NULL, 0, 0, 0))
+                AS rows(treatment, conversion, visit, exposure)
+            """
+        ).fetchone()[0]
+    finally:
+        connection.close()
+    assert valid is False
+
+
 def test_train_category_maps_are_contiguous_and_unseen_is_missing(tmp_path: Path) -> None:
     train = pd.DataFrame({"f1": [3.0, 1.0, 3.0, 2.0], "split": ["train"] * 4})
     output = tmp_path / "category_map.json"
