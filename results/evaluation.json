@@ -1,0 +1,22 @@
+{
+  "evaluation_sample": "held_out_test",
+  "test_rows": 2797091,
+  "treatment_propensity": 0.85,
+  "capacities": [
+    0.05,
+    0.1,
+    0.2,
+    0.5,
+    1.0
+  ],
+  "bootstrap": {
+    "method": "paired_nonparametric_row_bootstrap",
+    "replicates": 1000,
+    "seed": 20260805,
+    "interval": "pointwise_percentile_95_percent"
+  },
+  "policy_value_unit": "incremental_outcomes_per_test_row",
+  "average_treatment_effect_sample": "complete_source",
+  "test_cohort_count_definition": "policy_value multiplied by test_rows",
+  "qini_curve_points_saved": 101
+}

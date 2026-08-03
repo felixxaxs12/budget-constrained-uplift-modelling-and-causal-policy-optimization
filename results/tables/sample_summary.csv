@@ -1,0 +1,12 @@
+metric,group,value,quantity_type,unit,sample_scope
+test_rows,all,2797091.0,sample_count,rows,held_out_test
+rows,control,419300.0,sample_count,rows,held_out_test
+conversion_events,control,814.0,sample_count,events,held_out_test
+conversion_rate,control,0.001941330789410923,sample_rate,proportion,held_out_test
+visit_events,control,16110.0,sample_count,events,held_out_test
+visit_rate,control,0.0384211781540663,sample_rate,proportion,held_out_test
+rows,treated,2377791.0,sample_count,rows,held_out_test
+conversion_events,treated,7255.0,sample_count,events,held_out_test
+conversion_rate,treated,0.0030511512576168387,sample_rate,proportion,held_out_test
+visit_events,treated,115108.0,sample_count,events,held_out_test
+visit_rate,treated,0.048409637348278294,sample_rate,proportion,held_out_test

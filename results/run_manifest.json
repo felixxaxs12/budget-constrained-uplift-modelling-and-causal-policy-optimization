@@ -1,0 +1,42 @@
+{
+  "command": "evaluate",
+  "created_utc": "2026-08-03T22:25:36.998514+00:00",
+  "inputs": {
+    "category_map_sha256": "a84f849514f0e72991a2eb56c492069a9fe0851273543f62986cca74cc0f392e",
+    "config_canonical_sha256": "92215d9644ed1751d9243319e3ab1e52d2aa023416834c7631014c72f1540812",
+    "freeze_manifest_sha256": "140113d9dcb4bfe6bc0b4968414b5393556d2f29c18a4bd8addfe9c9da5ed30a",
+    "prepared_manifest_sha256": "8d1738aac167b00829089c9d53932b29851738cb8c7598fe8ced0c9f43125338",
+    "raw_data_sha256": "2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc",
+    "tracked_model_freeze_sha256": "140113d9dcb4bfe6bc0b4968414b5393556d2f29c18a4bd8addfe9c9da5ed30a"
+  },
+  "integrity": {
+    "freeze_verified_before_test_outcomes_read": true,
+    "predictions_created_before_test_outcomes_read": true,
+    "test_used_for_model_selection": false
+  },
+  "outputs": {
+    "evaluation.json": "49ef1d40311c7ba14a2c4de8fd4bb4eb49a14b06cdae3934a8860620e25e29bb",
+    "figures/conversion_policy_contrasts.pdf": "f21beaad08a17ca301b2c8d955c2609d377653a61383589b15d8c656d315990b",
+    "figures/conversion_policy_contrasts.png": "22489a05dbc982d6b158e0d5bbd6f36e41d469c5336a0c5bf5ca7dadc867355d",
+    "figures/policy_values.pdf": "4ae730c3bb344cd4850d8f46d8e22b54ef48ab5499442d680e245d992f65a106",
+    "figures/policy_values.png": "a5e0b640df21dc17e0d3798d082d91589d98ff3cb9133c67265c575828d284c9",
+    "figures/qini_curves.pdf": "83cfd65f257ef6647b7602b63dd85f0e26bafe131acc5ead8195ea9b1bd354d7",
+    "figures/qini_curves.png": "f02cb7a8495e5885289ea0229278d6363edb6ef9989142e22149e5779ec459e2",
+    "tables/average_treatment_effects.csv": "e88ba793e7a294b2d92b8b0a75a529374032ee41113314a14aa7b7f27ef5ff64",
+    "tables/policy_contrasts.csv": "f9f3fae1c811507fe974b2b8a0b801af519f6fc4ffc22230c627505bb47597d2",
+    "tables/policy_values.csv": "4098321c94aabfe35cc87169168fc115eddb4c224fe01e350699093e6a61b00f",
+    "tables/qini_coefficients.csv": "a56c4b02ac5f3233188b6d198c54deefec08621347c6cfd946349a37d41fea72",
+    "tables/qini_curves.csv": "18672b9b6e8a3ec30cb96619e8a8e819ac415f94efd09d6a68d50c00f29713b4",
+    "tables/sample_summary.csv": "9d93766e6b7af923bc66ade0f35a49909e5a484225927d04911c6e6082f6f664"
+  },
+  "prepared_rows": {
+    "test": 2797091,
+    "train": 8386222,
+    "validation": 2796279
+  },
+  "source": {
+    "git_commit_before_outputs": "9a539eb7620ffab2b3f4b82420cfd68a50c5e925",
+    "git_dirty_before_outputs": false
+  },
+  "test_rows": 2797091
+}

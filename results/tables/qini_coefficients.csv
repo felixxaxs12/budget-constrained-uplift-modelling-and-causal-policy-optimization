@@ -1,0 +1,4 @@
+policy,coefficient,quantity_type,unit,sample_scope
+response,0.0005126514006778567,qini_coefficient,centered_ipw_gain_area_per_test_row,held_out_test
+t_learner,0.00036510420458164974,qini_coefficient,centered_ipw_gain_area_per_test_row,held_out_test
+dr_learner,0.000225844621777171,qini_coefficient,centered_ipw_gain_area_per_test_row,held_out_test

@@ -1,0 +1,3 @@
+outcome,estimate,standard_error,ci_lower,ci_upper,n_treated,n_control,quantity_type,unit,sample_scope
+conversion,0.0011518730521316279,3.4371690289992735e-05,0.001084505777075477,0.0012192403271877787,11882655,2096937,average_treatment_effect,probability_difference,complete_source
+visit,0.010342403129198284,0.00014631645066032718,0.010055628155558312,0.010629178102838257,11882655,2096937,average_treatment_effect,probability_difference,complete_source
