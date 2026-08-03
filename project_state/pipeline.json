@@ -1,0 +1,33 @@
+{
+  "project": "Budget-Constrained Uplift Modelling and Causal Policy Optimization",
+  "author": "Yi Zhao",
+  "repository_visibility": "public",
+  "pipeline_state": "stage_1_phase_1_awaiting_user_confirmation",
+  "current_stage": "research_design",
+  "version_label": "research_v1",
+  "dataset": {
+    "name": "Criteo Uplift v2.1",
+    "status": "not_downloaded",
+    "results_computed": false
+  },
+  "fixed_decisions": {
+    "primary_outcome": "conversion",
+    "secondary_outcome": "visit",
+    "estimand": "intention_to_treat",
+    "budget_type": "capacity_fraction",
+    "capacity_grid": [0.05, 0.1, 0.2, 0.5, 1.0],
+    "monetary_claims": false,
+    "exposure_as_feature": false
+  },
+  "stage_outputs": [
+    "docs/research_protocol.md",
+    "docs/methodology.md",
+    "docs/prior_art.md",
+    "docs/architecture.md",
+    "data/README.md",
+    "docs/reviews/stage_01_scoping.md"
+  ],
+  "review_verdict": "PASS",
+  "review_rounds": 2,
+  "checkpoint_confirmed": false
+}
