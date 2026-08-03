@@ -509,8 +509,23 @@ def _plot_contrasts(contrasts: pd.DataFrame, output: Path) -> list[Path]:
     for name in dict.fromkeys(subset["name"]):
         rows = subset.loc[subset["name"].eq(name)].sort_values("capacity")
         x = rows["capacity"].to_numpy() * 100.0
-        axis.plot(x, rows["estimate"], marker="o", label=name.replace("_", " "))
-        axis.fill_between(x, rows["ci_lower"], rows["ci_upper"], alpha=0.12)
+        policy, baseline = name.split("_minus_", maxsplit=1)
+        color = _POLICY_COLORS[policy]
+        axis.plot(
+            x,
+            rows["estimate"],
+            marker="o" if baseline == "random" else "s",
+            linestyle="-" if baseline == "random" else "--",
+            color=color,
+            label=name.replace("_", " "),
+        )
+        axis.fill_between(
+            x,
+            rows["ci_lower"],
+            rows["ci_upper"],
+            color=color,
+            alpha=0.12,
+        )
     axis.axhline(0.0, color="0.25", linewidth=0.8)
     axis.set_xlabel("Treatment capacity (%)")
     axis.set_ylabel("Difference in conversions per test row")
