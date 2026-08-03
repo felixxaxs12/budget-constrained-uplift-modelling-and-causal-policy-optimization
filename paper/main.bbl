@@ -1,0 +1,102 @@
+\begin{thebibliography}{12}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Athey and Wager(2021)]{athey2021policy}
+Susan Athey and Stefan Wager.
+\newblock Policy learning with observational data.
+\newblock \emph{Econometrica}, 89\penalty0 (1):\penalty0 133--161, 2021.
+\newblock \doi{10.3982/ECTA15732}.
+
+\bibitem[Betlei et~al.(2021)Betlei, Diemert, and Amini]{betlei2021uplift}
+Artem Betlei, Eustache Diemert, and Massih-Reza Amini.
+\newblock Uplift modeling with generalization guarantees.
+\newblock In \emph{Proceedings of the 27th ACM SIGKDD Conference on Knowledge
+  Discovery and Data Mining}, pages 55--65, 2021.
+\newblock \doi{10.1145/3447548.3467395}.
+
+\bibitem[Chernozhukov et~al.(2018)Chernozhukov, Chetverikov, Demirer, Duflo,
+  Hansen, Newey, and Robins]{chernozhukov2018dml}
+Victor Chernozhukov, Denis Chetverikov, Mert Demirer, Esther Duflo, Christian
+  Hansen, Whitney Newey, and James Robins.
+\newblock Double/debiased machine learning for treatment and structural
+  parameters.
+\newblock \emph{The Econometrics Journal}, 21\penalty0 (1):\penalty0 C1--C68,
+  2018.
+\newblock \doi{10.1111/ectj.12097}.
+
+\bibitem[{Criteo AI Lab}(2024)]{criteoDataset}
+{Criteo AI Lab}.
+\newblock {CRITEO-UPLIFTv2}: Uplift prediction dataset.
+\newblock \url{https://huggingface.co/datasets/criteo/criteo-uplift}, 2024.
+\newblock Dataset card, accessed 3 August 2026.
+
+\bibitem[Devriendt et~al.(2022)Devriendt, Van~Belle, Guns, and
+  Verbeke]{devriendt2022rank}
+Floris Devriendt, Jente Van~Belle, Tias Guns, and Wouter Verbeke.
+\newblock Learning to rank for uplift modeling.
+\newblock \emph{IEEE Transactions on Knowledge and Data Engineering},
+  34\penalty0 (10):\penalty0 4888--4904, 2022.
+\newblock \doi{10.1109/TKDE.2020.3048510}.
+
+\bibitem[Diemert et~al.(2018)Diemert, Betlei, Renaudin, and
+  Amini]{diemert2018benchmark}
+Eustache Diemert, Artem Betlei, Christophe Renaudin, and Massih-Reza Amini.
+\newblock A large scale benchmark for uplift modeling.
+\newblock In \emph{Proceedings of the AdKDD and TargetAd Workshop, KDD}, 2018.
+\newblock URL
+  \url{https://www.adkdd.org/papers/a-large-scale-benchmark-for-uplift-modeling/2018}.
+
+\bibitem[Diemert et~al.(2021)Diemert, Betlei, Renaudin, Amini, Gregoir, and
+  Rahier]{diemert2021benchmark}
+Eustache Diemert, Artem Betlei, Christophe Renaudin, Massih-Reza Amini,
+  Th{\'e}ophane Gregoir, and Thibaud Rahier.
+\newblock A large scale benchmark for individual treatment effect prediction
+  and uplift modeling.
+\newblock \emph{arXiv preprint arXiv:2111.10106}, 2021.
+\newblock \doi{10.48550/arXiv.2111.10106}.
+\newblock URL \url{https://arxiv.org/abs/2111.10106}.
+
+\bibitem[Dud{\'i}k et~al.(2011)Dud{\'i}k, Langford, and Li]{dudik2011dr}
+Miroslav Dud{\'i}k, John Langford, and Lihong Li.
+\newblock Doubly robust policy evaluation and learning.
+\newblock In \emph{Proceedings of the 28th International Conference on Machine
+  Learning}, pages 1097--1104, 2011.
+\newblock URL \url{https://arxiv.org/abs/1103.4601}.
+
+\bibitem[Fern{\'a}ndez-Lor{\'i}a and Provost(2022)]{fernandezloria2022causal}
+Carlos Fern{\'a}ndez-Lor{\'i}a and Foster Provost.
+\newblock Causal classification: Treatment effect estimation vs. outcome
+  prediction.
+\newblock \emph{Journal of Machine Learning Research}, 23\penalty0
+  (59):\penalty0 1--35, 2022.
+\newblock URL \url{https://jmlr.org/papers/v23/19-480.html}.
+
+\bibitem[Kennedy(2023)]{kennedy2023dr}
+Edward~H. Kennedy.
+\newblock Towards optimal doubly robust estimation of heterogeneous causal
+  effects.
+\newblock \emph{Electronic Journal of Statistics}, 17\penalty0 (2):\penalty0
+  3008--3049, 2023.
+\newblock \doi{10.1214/23-EJS2157}.
+
+\bibitem[Kitagawa and Tetenov(2018)]{kitagawa2018treatment}
+Toru Kitagawa and Aleksey Tetenov.
+\newblock Who should be treated? empirical welfare maximization methods for
+  treatment choice.
+\newblock \emph{Econometrica}, 86\penalty0 (2):\penalty0 591--616, 2018.
+\newblock \doi{10.3982/ECTA13288}.
+
+\bibitem[K{\"u}nzel et~al.(2019)K{\"u}nzel, Sekhon, Bickel, and
+  Yu]{kunzel2019metalearners}
+S{\"o}ren~R. K{\"u}nzel, Jasjeet~S. Sekhon, Peter~J. Bickel, and Bin Yu.
+\newblock Metalearners for estimating heterogeneous treatment effects using
+  machine learning.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 116\penalty0
+  (10):\penalty0 4156--4165, 2019.
+\newblock \doi{10.1073/pnas.1804597116}.
+
+\end{thebibliography}

@@ -13,6 +13,7 @@ artifacts/models/
 *.duckdb
 paper/*.aux
 paper/*.bbl
+!paper/main.bbl
 paper/*.blg
 paper/*.fdb_latexmk
 paper/*.fls
