@@ -10,18 +10,20 @@ version_label: methodology_v1
 
 ## Design
 
-This is a quantitative secondary analysis of a randomized experiment. The causal target is intention to treat. The study recruits no participants and introduces no new intervention. Before dissemination, the author will confirm any institutional determination required by the policy that applies to the author. The public-data terms and attribution requirements apply.
+This is a quantitative secondary analysis of `CRITEO-UPLIFTv2`, using Criteo's official `v2.1` artifact. The causal target is intention to treat. The study recruits no participants and introduces no new intervention. Before dissemination, the author will confirm any institutional determination required by the policy that applies to the author. The public-data terms and attribution requirements apply.
 
-The study follows a locked train, validation, and test design. The test split is opened only after data checks, estimator tests, model fitting, and validation-stage decisions are complete.
+The study follows a locked train, validation, and test design. Before the model freeze, test rows are accessed only for pre-specified schema and structural-integrity checks that do not estimate rates or effects. Test outcome summaries, average treatment effects, ranking diagnostics, and policy values remain unopened until estimator tests, model fitting, and validation-stage decisions are complete. The full-sample average-effect estimates are produced during the same single final-results stage, after every model and reporting decision is frozen.
 
 ## Data and split
 
 1. Download `criteo-uplift-v2.1.csv.gz` from Criteo's official link.
 2. Record the URL, download time, byte size, and SHA-256 checksum.
 3. Ingest the compressed CSV with an explicit schema and add a stable `row_id`. `row_id` is never a feature.
-4. Validate column names, numeric finiteness, binary fields, row count, and the structural relation between `treatment` and `exposure`.
+4. Validate column names, numeric finiteness, binary fields, row count, and the two source-defined structural relations: control implies no exposure, and conversion implies visit.
 5. Do not drop repeated feature or outcome rows. The dataset has no documented unique user identifier, so repeated anonymous records are not proven duplicates.
 6. Assign rows reproducibly to 60% train, 20% validation, and 20% test using a seeded hash of `row_id` with seed `20260803`.
+
+The 2021 v2 paper classifies `f0`, `f2`, `f7`, and `f10` as continuous and the remaining eight features as categorical, although all values are stored numerically. Phase 3 will validate those storage properties against the downloaded file before creating one typed feature matrix.
 
 Raw and processed data remain outside Git. The repository stores the downloader, checksum manifest, schema report, split manifest, and aggregate results.
 
@@ -33,6 +35,8 @@ Raw and processed data remain outside Git. The repository stores the downloader,
 - Confirm that `exposure` is excluded from every design matrix.
 
 ## Average effects
+
+The estimators and their algebraic tests are implemented before model fitting, but no real-data average treatment effect is computed or reported until the final-results stage. At that point the pre-specified estimate uses all released rows. This full-sample estimand describes the released randomized benchmark and is separate from the held-out comparison of learned policies.
 
 For each binary outcome \(Y\in\{C,V\}\), estimate
 
@@ -51,7 +55,7 @@ Report arm counts, arm rates, the absolute risk difference, and a 95% confidence
 
 ## Locked policy set
 
-All learned policies use the same feature matrix and one documented set of tree and regularization settings. The outcome models use binary log-loss, while the DR second-stage model uses squared-error loss because its target is continuous. There is no broad hyperparameter sweep.
+All learned policies use the same typed feature matrix and one documented set of tree and regularization settings. LightGBM receives the four source-described continuous columns as numeric and the other eight as categorical. The outcome models use binary log-loss, while the DR second-stage model uses squared-error loss because its target is continuous. There is no parallel one-hot representation and no broad hyperparameter sweep.
 
 1. Expected random allocation: allocate exactly \(k=\lfloor qn_{test}\rfloor\) slots uniformly without replacement. Evaluation integrates over that random allocation, so no arbitrary draw is needed.
 2. Response ranking: rank by \(\widehat m_1(X)=\widehat P(C=1\mid X,T=1)\). After validation freezes its boosting-round count, this model is refitted on treated train and validation rows and reused by the T-learner.

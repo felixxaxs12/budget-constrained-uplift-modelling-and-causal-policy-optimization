@@ -10,11 +10,11 @@ version_label: research_v1
 
 ## Topic
 
-Capacity-constrained causal targeting on the official unbiased Criteo Uplift v2.1 randomized benchmark.
+Capacity-constrained causal targeting on `CRITEO-UPLIFTv2` using Criteo's official corrected `v2.1` artifact.
 
 ## Primary research question
 
-On the official unbiased Criteo Uplift v2.1 dataset, how much, if at all, can a policy learned from pre-treatment covariates improve held-out incremental conversions over random and response-based targeting at fixed, pre-specified treatment-capacity fractions?
+On the official Criteo `CRITEO-UPLIFTv2` randomized benchmark, how much, if at all, can a policy learned from pre-treatment covariates improve held-out incremental conversions over random and response-based targeting at fixed, pre-specified treatment-capacity fractions?
 
 ## Primary estimand
 
@@ -84,7 +84,7 @@ The primary comparisons are paired differences in \(\Delta_{C,n}\) between learn
 
 ## Evidence status
 
-No project result has been computed. The row count, field descriptions, two-week outcome window, and approximate treatment ratio are source-reported properties from Criteo's dataset page and benchmark paper. They will be checked against the downloaded file in the next stage.
+The official `v2.1` artifact has been downloaded and its byte size, SHA-256, gzip integrity, ordered header, and 13,979,592 data rows have been verified. The two-week outcome window and feature timing remain source-described properties from the 2021 paper. Treatment, outcome, effect, model, and policy-value statistics have not yet been computed.
 
 ## Reporting boundary
 

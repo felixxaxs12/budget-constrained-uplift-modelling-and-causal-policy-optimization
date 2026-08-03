@@ -1,12 +1,12 @@
 # Budget-Constrained Uplift Modelling and Causal Policy Optimization
 
-This repository studies treatment allocation under fixed capacity using the official unbiased Criteo Uplift v2.1 randomized dataset. The primary outcome is conversion. Visit is secondary.
+This repository studies treatment allocation under fixed capacity using `CRITEO-UPLIFTv2` and Criteo's official corrected `v2.1` artifact. The primary outcome is conversion. Visit is secondary.
 
-The project is currently at the design-freeze stage. No dataset-derived estimate, model result, table, or figure has been produced yet.
+The research design and official-data provenance checks are complete. No treatment-effect estimate, model result, policy value, analysis table, or analysis figure has been produced yet.
 
 ## Research question
 
-On the official unbiased Criteo Uplift v2.1 dataset, how much, if at all, can a policy learned from pre-treatment covariates improve held-out incremental conversions over random and response-based targeting at fixed, pre-specified treatment-capacity fractions?
+On the official Criteo `CRITEO-UPLIFTv2` randomized benchmark, how much, if at all, can a policy learned from pre-treatment covariates improve held-out incremental conversions over random and response-based targeting at fixed, pre-specified treatment-capacity fractions?
 
 ## Fixed boundaries
 
@@ -25,11 +25,24 @@ On the official unbiased Criteo Uplift v2.1 dataset, how much, if at all, can a 
 - [Data provenance and license](data/README.md)
 - [Independent design review](docs/reviews/stage_01_scoping.md)
 
-The implementation, downloaded data manifest, analyses, tables, figures, dashboard, and paper will be added only after the design review passes.
+The design review passed in two rounds. Phase 2 began only after the user confirmed the checkpoint.
+
+## Phase 2 artifacts
+
+- [Verified data manifest](data/manifest.json)
+- [Data provenance and license](data/README.md)
+- [Official downloader](scripts/download_data.py)
+- [Targeted prior-art evidence](docs/prior_art.md)
+- [Independent investigation review](docs/reviews/stage_02_investigation.md)
+
+The raw 311,422,618-byte gzip is stored locally under `data/raw/` and is excluded from Git under Criteo's CC BY-NC-SA 4.0 terms. Its SHA-256 is `2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc`.
+
+The Phase 2 review passed in two rounds. Phase 3 will begin only after the user confirms this checkpoint.
 
 ## Source
 
-Criteo AI Lab describes the unbiased release as a 13,979,592-row CSV with 12 anonymized features, randomized treatment, two binary outcomes, and an exposure field. The official download is `criteo-uplift-v2.1.csv.gz`.
+Criteo AI Lab reports 13,979,592 rows for the corrected release. This project independently verified that row count and the 16-column ordered header in the downloaded artifact.
 
 - Dataset page: https://ailab.criteo.com/criteo-uplift-prediction-dataset/
-- Benchmark paper: https://www.adkdd.org/papers/a-large-scale-benchmark-for-uplift-modeling/2018
+- Primary v2 paper: https://arxiv.org/abs/2111.10106
+- Historical v1 paper: https://www.adkdd.org/papers/a-large-scale-benchmark-for-uplift-modeling/2018

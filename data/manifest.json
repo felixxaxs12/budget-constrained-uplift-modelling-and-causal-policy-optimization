@@ -1,0 +1,102 @@
+{
+  "dataset": "Criteo Uplift Modeling Dataset",
+  "release": "CRITEO-UPLIFTv2",
+  "artifact_version": "v2.1",
+  "publisher": "Criteo AI Lab",
+  "file_name": "criteo-uplift-v2.1.csv.gz",
+  "local_path": "data/raw/criteo-uplift-v2.1.csv.gz",
+  "source_url": "https://go.criteo.net/criteo-research-uplift-v2.1.csv.gz",
+  "resolved_url": "https://criteostorage.blob.core.windows.net/criteo-research-datasets/criteo-uplift-v2.1.csv.gz",
+  "dataset_page": "https://ailab.criteo.com/criteo-uplift-prediction-dataset/",
+  "license": "CC BY-NC-SA 4.0",
+  "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+  "citations": {
+    "criteo_requested": {
+      "title": "A Large Scale Benchmark for Uplift Modeling",
+      "authors": [
+        "Eustache Diemert",
+        "Artem Betlei",
+        "Christophe Renaudin",
+        "Massih-Reza Amini"
+      ],
+      "year": 2018,
+      "url": "https://www.adkdd.org/papers/a-large-scale-benchmark-for-uplift-modeling/2018"
+    },
+    "v2_documentation": {
+      "title": "A Large Scale Benchmark for Individual Treatment Effect Prediction and Uplift Modeling",
+      "authors": [
+        "Eustache Diemert",
+        "Artem Betlei",
+        "Christophe Renaudin",
+        "Massih-Reza Amini",
+        "Theophane Gregoir",
+        "Thibaud Rahier"
+      ],
+      "year": 2021,
+      "url": "https://arxiv.org/abs/2111.10106"
+    }
+  },
+  "retrieved_at_utc": "2026-08-03T20:15:15.309646+00:00",
+  "source_reported": {
+    "compressed_size": "297M",
+    "rows": 13979592,
+    "average_visit_rate": 0.046992,
+    "average_conversion_rate": 0.00292,
+    "treatment_ratio": 0.85
+  },
+  "observed": {
+    "byte_size": 311422618,
+    "expected_byte_size": 311422618,
+    "byte_size_matches_expected": true,
+    "sha256": "2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc",
+    "expected_sha256": "2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc",
+    "sha256_matches_expected": true,
+    "gzip_crc_checked": true,
+    "data_rows": 13979592,
+    "row_count_matches_source": true,
+    "ordered_columns": [
+      "f0",
+      "f1",
+      "f2",
+      "f3",
+      "f4",
+      "f5",
+      "f6",
+      "f7",
+      "f8",
+      "f9",
+      "f10",
+      "f11",
+      "treatment",
+      "conversion",
+      "visit",
+      "exposure"
+    ]
+  },
+  "schema_roles": {
+    "feature_columns": {
+      "continuous": [
+        "f0",
+        "f2",
+        "f7",
+        "f10"
+      ],
+      "categorical": [
+        "f1",
+        "f3",
+        "f4",
+        "f5",
+        "f6",
+        "f8",
+        "f9",
+        "f11"
+      ],
+      "storage": "numeric",
+      "role": "pre-treatment covariates"
+    },
+    "treatment": "source-described randomized assignment",
+    "conversion": "binary primary outcome",
+    "visit": "binary secondary outcome",
+    "exposure": "binary post-assignment exposure; excluded from model features"
+  }
+}

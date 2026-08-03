@@ -2,12 +2,17 @@
   "project": "Budget-Constrained Uplift Modelling and Causal Policy Optimization",
   "author": "Yi Zhao",
   "repository_visibility": "public",
-  "pipeline_state": "stage_1_phase_1_awaiting_user_confirmation",
-  "current_stage": "research_design",
+  "pipeline_state": "phase_2_investigation_awaiting_user_confirmation",
+  "current_stage": "source_and_data_investigation",
   "version_label": "research_v1",
   "dataset": {
-    "name": "Criteo Uplift v2.1",
-    "status": "not_downloaded",
+    "name": "CRITEO-UPLIFTv2",
+    "artifact_version": "v2.1",
+    "status": "downloaded_and_provenance_verified",
+    "local_path": "data/raw/criteo-uplift-v2.1.csv.gz",
+    "byte_size": 311422618,
+    "sha256": "2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc",
+    "data_rows": 13979592,
     "results_computed": false
   },
   "fixed_decisions": {
@@ -19,15 +24,33 @@
     "monetary_claims": false,
     "exposure_as_feature": false
   },
-  "stage_outputs": [
-    "docs/research_protocol.md",
-    "docs/methodology.md",
-    "docs/prior_art.md",
-    "docs/architecture.md",
-    "data/README.md",
-    "docs/reviews/stage_01_scoping.md"
-  ],
-  "review_verdict": "PASS",
-  "review_rounds": 2,
-  "checkpoint_confirmed": false
+  "phase_outputs": {
+    "phase_1_scoping": [
+      "docs/research_protocol.md",
+      "docs/methodology.md",
+      "docs/architecture.md",
+      "docs/reviews/stage_01_scoping.md"
+    ],
+    "phase_2_investigation": [
+      "data/README.md",
+      "data/manifest.json",
+      "docs/prior_art.md",
+      "docs/reviews/stage_02_investigation.md",
+      "scripts/download_data.py",
+      "requirements.txt"
+    ]
+  },
+  "reviews": {
+    "phase_1_scoping": {
+      "verdict": "PASS",
+      "rounds": 2,
+      "user_confirmed": true,
+      "commit": "99d65f880016ec95e3803a0956a983374c700855"
+    },
+    "phase_2_investigation": {
+      "verdict": "PASS",
+      "rounds": 2,
+      "user_confirmed": false
+    }
+  }
 }
