@@ -24,11 +24,16 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 python scripts/download_data.py
-uplift-policy all --config configs/analysis.yaml
+uplift-policy prepare --config configs/analysis.yaml
+uplift-policy train --config configs/analysis.yaml
+# Commit the generated results/manifests/model_freeze.json, then continue
+uplift-policy evaluate --config configs/analysis.yaml
 pytest -q
 ```
 
 The downloader verifies the official file's byte size, SHA-256 checksum, gzip integrity, row count, and ordered schema. See [data/README.md](data/README.md) for provenance and licensing.
+
+Evaluation deliberately requires a clean working tree and an exact tracked copy of the model-freeze manifest. This makes the fitted-model hashes, training commit, selected boosting rounds, and software versions auditable before held-out outcomes are read. Model binaries remain local.
 
 ## Outputs
 

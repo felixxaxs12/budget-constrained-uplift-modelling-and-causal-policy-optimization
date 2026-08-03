@@ -124,4 +124,4 @@ uplift-policy train --config configs/analysis.yaml
 uplift-policy evaluate --config configs/analysis.yaml
 ```
 
-`uplift-policy all` runs the three analysis commands in order. Generated aggregate artifacts are canonical; the paper and dashboard read them rather than reimplementing calculations.
+After `train`, commit the generated `results/manifests/model_freeze.json` before running `evaluate`. The evaluation command requires a clean working tree and verifies that this tracked file exactly matches the local freeze manifest. Generated aggregate artifacts are canonical; the paper and dashboard read them rather than reimplementing calculations.
