@@ -24,7 +24,7 @@ The ordered schema is `f0` through `f11`, followed by `treatment`, `conversion`,
 python scripts/download_data.py
 ```
 
-The raw file is saved under `data/raw/`, which Git ignores. This repository chooses not to mirror the dataset; users obtain it directly from Criteo and are responsible for complying with its terms.
+The raw file and a timestamped download receipt are saved under `data/raw/`, which Git ignores. The committed [manifest.json](manifest.json) remains an immutable provenance record, so downloading the data does not dirty the source tree before model fitting. This repository chooses not to mirror the dataset; users obtain it directly from Criteo and are responsible for complying with its terms.
 
 ## Citation and license
 

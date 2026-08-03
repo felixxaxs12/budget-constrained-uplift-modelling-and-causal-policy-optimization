@@ -28,7 +28,7 @@ EXPECTED_ROWS = 13_979_592
 EXPECTED_BYTE_SIZE = 311_422_618
 EXPECTED_SHA256 = "2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc"
 RAW_PATH = Path("data/raw/criteo-uplift-v2.1.csv.gz")
-MANIFEST_PATH = Path("data/manifest.json")
+RECEIPT_PATH = Path("data/raw/download_receipt.json")
 
 
 def download() -> tuple[int, str, str, str]:
@@ -147,8 +147,8 @@ def main() -> None:
             "exposure": "binary post-assignment exposure; excluded from model features",
         },
     }
-    MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
-    MANIFEST_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    RECEIPT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RECEIPT_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(manifest, indent=2))
 
 

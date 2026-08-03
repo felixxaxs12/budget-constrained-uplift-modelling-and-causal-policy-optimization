@@ -10,8 +10,8 @@
     "tracked_model_freeze_sha256": "140113d9dcb4bfe6bc0b4968414b5393556d2f29c18a4bd8addfe9c9da5ed30a"
   },
   "integrity": {
-    "freeze_verified_before_test_outcomes_read": true,
-    "predictions_created_before_test_outcomes_read": true,
+    "freeze_verified_before_test_outcomes_loaded_for_evaluation": true,
+    "predictions_created_before_test_outcomes_loaded_for_evaluation": true,
     "test_used_for_model_selection": false
   },
   "outputs": {

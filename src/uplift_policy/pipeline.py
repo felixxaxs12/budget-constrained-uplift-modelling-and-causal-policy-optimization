@@ -570,7 +570,7 @@ def _plot_qini(curves: pd.DataFrame, output: Path) -> list[Path]:
 
 
 def run_evaluate(config: Mapping[str, Any]) -> dict[str, Any]:
-    """Evaluate frozen policies after enforcing the test-outcome access gate."""
+    """Evaluate frozen policies after enforcing the evaluation-data access gate."""
     source_commit, source_dirty = model_io._git_state()
     if source_dirty:
         raise RuntimeError("Evaluation requires a clean source tree before outputs are written")
@@ -580,8 +580,8 @@ def run_evaluate(config: Mapping[str, Any]) -> dict[str, Any]:
     feature_names = list(bundle.manifest["features"]["all"])
     feature_columns = ["row_id", *feature_names, "split"]
 
-    # Test outcomes remain unread until every hash is verified and all frozen
-    # score and nuisance predictions have been created from covariates alone.
+    # Test outcome columns are not loaded for evaluation or joined to predictions
+    # until every hash is verified and predictions exist from covariates alone.
     test_features = load_splits(config, ["test"], columns=feature_columns)
     test_features = apply_category_maps(
         test_features,
@@ -683,8 +683,8 @@ def run_evaluate(config: Mapping[str, Any]) -> dict[str, Any]:
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "command": "evaluate",
         "integrity": {
-            "freeze_verified_before_test_outcomes_read": True,
-            "predictions_created_before_test_outcomes_read": True,
+            "freeze_verified_before_test_outcomes_loaded_for_evaluation": True,
+            "predictions_created_before_test_outcomes_loaded_for_evaluation": True,
             "test_used_for_model_selection": False,
         },
         "inputs": {

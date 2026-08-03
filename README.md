@@ -33,7 +33,7 @@ pytest -q
 
 The downloader verifies the official file's byte size, SHA-256 checksum, gzip integrity, row count, and ordered schema. See [data/README.md](data/README.md) for provenance and licensing.
 
-Evaluation deliberately requires a clean working tree and an exact tracked copy of the model-freeze manifest. This makes the fitted-model hashes, training commit, selected boosting rounds, and software versions auditable before held-out outcomes are read. Model binaries remain local.
+Evaluation deliberately requires a clean working tree and an exact tracked copy of the model-freeze manifest. This makes the fitted-model hashes, training commit, selected boosting rounds, and software versions auditable before held-out outcome columns are loaded for evaluation or joined to frozen predictions. Model binaries remain local.
 
 ## Outputs
 

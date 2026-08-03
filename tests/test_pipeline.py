@@ -286,7 +286,9 @@ def test_evaluate_keeps_gate_order_and_labels_estimands(
         "git_commit_before_outputs": "clean-commit",
         "git_dirty_before_outputs": False,
     }
-    assert run_manifest["integrity"]["predictions_created_before_test_outcomes_read"]
+    assert run_manifest["integrity"][
+        "predictions_created_before_test_outcomes_loaded_for_evaluation"
+    ]
     assert len(result["figures"]) == 6
     assert (processed / "_prepare_manifest.json").exists()
 
