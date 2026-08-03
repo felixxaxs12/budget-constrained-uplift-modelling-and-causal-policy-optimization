@@ -118,21 +118,26 @@ def _pyplot() -> Any:
 
 def _plot_balance(balance: pd.DataFrame, output: Path) -> None:
     plt = _pyplot()
+    from matplotlib.patches import Patch
 
-    ordered = balance.assign(abs_value=balance["value"].abs()).sort_values(
-        "abs_value"
-    )
+    ordered = balance.sort_values("absolute_value")
     figure, axis = plt.subplots(figsize=(7.0, 4.8))
     colors = np.where(
         ordered["metric_type"].eq("pooled_smd"), "#3B6FB6", "#E07A3F"
     )
-    axis.barh(ordered["feature"], ordered["value"], color=colors)
+    axis.barh(ordered["feature"], ordered["absolute_value"], color=colors)
     axis.axvline(0.1, color="0.35", linewidth=1, linestyle="--")
-    axis.axvline(-0.1, color="0.35", linewidth=1, linestyle="--")
-    axis.axvline(0.0, color="0.2", linewidth=0.8)
-    axis.set_xlabel("Standardized mean difference")
+    axis.set_xlabel("Absolute standardized difference")
     axis.set_ylabel("")
     axis.set_title("Development-sample covariate balance")
+    axis.legend(
+        handles=[
+            Patch(color="#3B6FB6", label="Continuous: |pooled SMD|"),
+            Patch(color="#E07A3F", label="Categorical: max level |SMD|"),
+        ],
+        frameon=False,
+        loc="lower right",
+    )
     axis.spines[["top", "right"]].set_visible(False)
     figure.tight_layout()
     _save_figure(figure, output, pdf=False)

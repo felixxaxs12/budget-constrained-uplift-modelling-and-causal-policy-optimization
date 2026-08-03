@@ -1,0 +1,12 @@
+metric,value,quantity_type,unit,sample_scope
+binary_domains_valid,True,integrity_check,boolean,complete_source
+control_has_no_exposure,True,integrity_check,boolean,complete_source
+conversion_implies_visit,True,integrity_check,boolean,complete_source
+features_finite,True,integrity_check,boolean,complete_source
+header_matches,True,integrity_check,boolean,complete_source
+row_count,13979592,sample_count,rows,complete_source
+test_rows,2797091,sample_count,rows,test
+train_rows,8386222,sample_count,rows,train
+validation_rows,2796279,sample_count,rows,validation
+treatment_classifier_auc,0.5086976470591731,descriptive_randomization_diagnostic,auc,train_to_validation
+maximum_absolute_smd,0.035270733219491035,descriptive_randomization_diagnostic,standardized_mean_difference,train_and_validation
