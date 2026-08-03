@@ -8,3 +8,13 @@ __pycache__/
 data/raw/
 data/processed/
 artifacts/models/
+
+# Local analysis caches and generated manuscript build files.
+*.duckdb
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out

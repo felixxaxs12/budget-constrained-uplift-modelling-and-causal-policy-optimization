@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "Budget-Constrained Uplift Modelling and Causal Policy Optimization"
+type: software
+authors:
+  - family-names: Zhao
+    given-names: Yi
+date-released: 2026-08-03
+repository-code: "https://github.com/felixxaxs12/budget-constrained-uplift-modelling-and-causal-policy-optimization"
+license: MIT

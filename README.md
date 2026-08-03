@@ -1,48 +1,63 @@
 # Budget-Constrained Uplift Modelling and Causal Policy Optimization
 
-This repository studies treatment allocation under fixed capacity using `CRITEO-UPLIFTv2` and Criteo's official corrected `v2.1` artifact. The primary outcome is conversion. Visit is secondary.
+This repository evaluates whether causal targeting improves incremental conversions over response-based targeting when only a fixed fraction of users can receive treatment.
 
-The research design and official-data provenance checks are complete. No treatment-effect estimate, model result, policy value, analysis table, or analysis figure has been produced yet.
+The study uses the official randomized `CRITEO-UPLIFTv2` dataset and its corrected `v2.1` artifact. It treats `treatment` as the randomized intention-to-treat assignment and excludes the post-assignment `exposure` field from every model.
 
-## Research question
+## Method
 
-On the official Criteo `CRITEO-UPLIFTv2` randomized benchmark, how much, if at all, can a policy learned from pre-treatment covariates improve held-out incremental conversions over random and response-based targeting at fixed, pre-specified treatment-capacity fractions?
+Four allocation rules are compared at capacities of 5%, 10%, 20%, 50%, and 100%:
 
-## Fixed boundaries
+- expected uniform random allocation;
+- response ranking by predicted conversion under treatment;
+- a T-learner treatment-effect score; and
+- a cross-fitted doubly robust learner.
 
-- `treatment` is the randomized assignment and defines the intention-to-treat estimand.
-- `exposure` occurs after assignment. It will not be used as a feature, ranking input, conditioning variable, or primary estimand.
-- Capacity is the fraction of users who may be selected. The dataset has no monetary treatment cost or conversion value, so this project will not invent ROI or net-value results.
-- The final test split will not be used for fitting, early stopping, model selection, or outcome-informed threshold tuning. Frozen scores on test covariates may be ranked to implement the pre-specified top-\(k\) capacity rule.
-- Results will describe the released benchmark sample, not an actual campaign deployment.
+Models are selected on train and validation data. The final comparison uses held-out augmented inverse-probability-weighted policy value, paired row bootstrap intervals, and an independently defined IPW Qini diagnostic. Capacity denotes equal-cost user slots, not a monetary budget.
 
-## Stage 1 artifacts
+## Reproduce
 
-- [Research protocol](docs/research_protocol.md)
-- [Methodology blueprint](docs/methodology.md)
-- [Prior-art and contribution boundary](docs/prior_art.md)
-- [Minimal architecture](docs/architecture.md)
-- [Data provenance and license](data/README.md)
-- [Independent design review](docs/reviews/stage_01_scoping.md)
+Python 3.11 through 3.13 is supported. LightGBM requires an OpenMP runtime; on macOS this is commonly installed with `brew install libomp`.
 
-The design review passed in two rounds. Phase 2 began only after the user confirmed the checkpoint.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
+python scripts/download_data.py
+uplift-policy all --config configs/analysis.yaml
+pytest -q
+```
 
-## Phase 2 artifacts
+The downloader verifies the official file's byte size, SHA-256 checksum, gzip integrity, row count, and ordered schema. See [data/README.md](data/README.md) for provenance and licensing.
 
-- [Verified data manifest](data/manifest.json)
-- [Data provenance and license](data/README.md)
-- [Official downloader](scripts/download_data.py)
-- [Targeted prior-art evidence](docs/prior_art.md)
-- [Independent investigation review](docs/reviews/stage_02_investigation.md)
+## Outputs
 
-The raw 311,422,618-byte gzip is stored locally under `data/raw/` and is excluded from Git under Criteo's CC BY-NC-SA 4.0 terms. Its SHA-256 is `2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc`.
+The analysis writes aggregate tables, figures, model and run manifests under `results/`. Row-level predictions, fitted model files, processed Parquet data, and the raw dataset remain outside Git. The Streamlit application reads the committed aggregate outputs and does not recompute statistics.
 
-The Phase 2 review passed in two rounds. Phase 3 will begin only after the user confirms this checkpoint.
+```bash
+streamlit run app.py
+```
 
-## Source
+The paper source and compiled manuscript are stored under `paper/`.
 
-Criteo AI Lab reports 13,979,592 rows for the corrected release. This project independently verified that row count and the 16-column ordered header in the downloaded artifact.
+## Repository structure
 
-- Dataset page: https://ailab.criteo.com/criteo-uplift-prediction-dataset/
-- Primary v2 paper: https://arxiv.org/abs/2111.10106
-- Historical v1 paper: https://www.adkdd.org/papers/a-large-scale-benchmark-for-uplift-modeling/2018
+```text
+configs/analysis.yaml       Locked analysis settings
+data/                       Provenance manifest and download instructions
+docs/reproducibility.md     Estimands, model lifecycle, and evaluation definitions
+scripts/download_data.py    Official-data downloader and integrity verification
+src/uplift_policy/          Data, audit, model, evaluation, and orchestration code
+tests/                      Algebraic and real-data integration checks
+results/                    Canonical aggregate tables, figures, and manifests
+paper/                      arXiv-style manuscript source and PDF
+app.py                      Read-only results explorer
+```
+
+## Scope
+
+Results describe offline policy evaluation within the released benchmark distribution. They are not estimates of advertiser ROI, realized campaign impact, exposure effects, or performance in a future deployment.
+
+## License
+
+Original code is released under the [MIT License](LICENSE). The Criteo dataset is not included in this repository and remains subject to Criteo's [CC BY-NC-SA 4.0 terms](https://creativecommons.org/licenses/by-nc-sa/4.0/). The manuscript is released under CC BY 4.0.
