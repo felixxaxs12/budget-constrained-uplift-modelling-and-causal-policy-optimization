@@ -1,0 +1,97 @@
+{
+  "created_utc": "2026-08-03T21:57:28.618083+00:00",
+  "development_rows": {
+    "total": 11182501,
+    "train": 8386222,
+    "validation": 2796279
+  },
+  "features": {
+    "all": [
+      "f0",
+      "f2",
+      "f7",
+      "f10",
+      "f1",
+      "f3",
+      "f4",
+      "f5",
+      "f6",
+      "f8",
+      "f9",
+      "f11"
+    ],
+    "categorical": [
+      "f1",
+      "f3",
+      "f4",
+      "f5",
+      "f6",
+      "f8",
+      "f9",
+      "f11"
+    ]
+  },
+  "folds": 3,
+  "format_version": 1,
+  "hashes": {
+    "category_map_sha256": "a84f849514f0e72991a2eb56c492069a9fe0851273543f62986cca74cc0f392e",
+    "config_canonical_sha256": "92215d9644ed1751d9243319e3ab1e52d2aa023416834c7631014c72f1540812",
+    "raw_data_sha256": "2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc"
+  },
+  "models": {
+    "conversion_m0": {
+      "path": "conversion_m0.txt",
+      "sha256": "107677c972af1bf5ded892467c62778e1180ffda7b9567e4beba7b98d0fefea2"
+    },
+    "conversion_m1": {
+      "path": "conversion_m1.txt",
+      "sha256": "7a1090340e378681aa41df55358f3a55121f6cbe59e99c0c3f1c93744be3ffe5"
+    },
+    "dr_learner": {
+      "path": "dr_learner.txt",
+      "sha256": "4368b5f93569d5544c05af8cdf7e6ab5f176de6cdfc5a5dee6ccd3233e5434ca"
+    },
+    "visit_m0": {
+      "path": "visit_m0.txt",
+      "sha256": "dde3f67ca6b7ce0dacb927b247c01c2e3449827dadff33a21dec796bcee3314e"
+    },
+    "visit_m1": {
+      "path": "visit_m1.txt",
+      "sha256": "1a17acc9f0a6468eb366e2d66cf0264058a6b5403b80915c4a87774add785da8"
+    }
+  },
+  "policy_scores": {
+    "dr_learner": "dr_learner",
+    "response": "conversion_m1",
+    "t_learner": "conversion_m1 - conversion_m0"
+  },
+  "propensity": 0.85,
+  "seeds": {
+    "fold": 20260804,
+    "model": 20260803
+  },
+  "selected_rounds": {
+    "conversion_m0": 59,
+    "conversion_m1": 95,
+    "dr_learner": 10,
+    "visit_m0": 121,
+    "visit_m1": 236
+  },
+  "software": {
+    "lightgbm": "4.7.0",
+    "numpy": "2.5.1",
+    "pandas": "3.0.5",
+    "python": "3.13.1"
+  },
+  "source": {
+    "git_commit": "c3412d1685a0c8add8f1f3cc2876d093427ddcef",
+    "git_dirty": false
+  },
+  "validation_losses": {
+    "conversion_m0": 0.008349298288314835,
+    "conversion_m1": 0.01273436641350683,
+    "dr_learner": 0.014024113526871728,
+    "visit_m0": 0.0902703243461847,
+    "visit_m1": 0.10570950240306026
+  }
+}
