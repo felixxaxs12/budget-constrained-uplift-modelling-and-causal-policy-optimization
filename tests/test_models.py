@@ -1,84 +1,94 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 from pathlib import Path
 
+import duckdb
 import numpy as np
 import pandas as pd
 import pytest
 
-from uplift_policy.evaluation import aipw_scores
-from uplift_policy.models import (
-    _fold_ids,
-    fit_model_bundle,
-    load_model_bundle,
-)
+from uplift_policy.data import apply_category_maps, load_config
+from uplift_policy.models import _fold_ids, fit_model_bundle, load_model_bundle
 
 
-def _config(raw_path: Path) -> dict:
-    return {
-        "seed": 20260803,
-        "propensity": 0.85,
-        "paths": {"raw_data": str(raw_path)},
-        "features": {
-            "continuous": ["f0", "f2", "f7", "f10"],
-            "categorical": ["f1", "f3", "f4", "f5", "f6", "f8", "f9", "f11"],
-        },
-        "lightgbm": {
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CONTINUOUS = ["f0", "f2", "f7", "f10"]
+CATEGORICAL = ["f1", "f3", "f4", "f5", "f6", "f8", "f9", "f11"]
+FIXTURE_ROWS_PER_SPLIT = {0: 6_000, 1: 34_000}
+
+
+@pytest.fixture(scope="session")
+def official_development_fixture() -> tuple[dict, pd.DataFrame, Path]:
+    raw_path = PROJECT_ROOT / "data/raw/criteo-uplift-v2.1.csv.gz"
+    processed_path = PROJECT_ROOT / "data/processed/criteo"
+    category_path = PROJECT_ROOT / "artifacts/models/category_map.json"
+    partition_files = {
+        split: sorted((processed_path / f"split={split}").glob("*.parquet"))
+        for split in ("train", "validation")
+    }
+    if (
+        not raw_path.is_file()
+        or not category_path.is_file()
+        or any(not files for files in partition_files.values())
+    ):
+        pytest.skip("official raw data and prepared train/validation partitions required")
+
+    selected_columns = [
+        "row_id",
+        *CONTINUOUS,
+        *CATEGORICAL,
+        "treatment",
+        "conversion",
+        "visit",
+        "split",
+    ]
+    projection = ", ".join(f'"{column}"' for column in selected_columns)
+    frames: list[pd.DataFrame] = []
+    connection = duckdb.connect()
+    try:
+        for split in ("train", "validation"):
+            parquet_glob = str(processed_path / f"split={split}" / "*.parquet")
+            for treatment, limit in FIXTURE_ROWS_PER_SPLIT.items():
+                frames.append(
+                    connection.execute(
+                        f"""
+                        SELECT {projection}
+                        FROM read_parquet(?, hive_partitioning = true)
+                        WHERE treatment = ?
+                        LIMIT {limit}
+                        """,
+                        [parquet_glob, treatment],
+                    ).fetch_df()
+                )
+    finally:
+        connection.close()
+
+    frame = pd.concat(frames, ignore_index=True)
+    with category_path.open(encoding="utf-8") as stream:
+        category_maps = json.load(stream)["features"]
+    frame = apply_category_maps(frame, category_maps, CATEGORICAL)
+
+    grouped = frame.groupby(["split", "treatment"], observed=True)
+    assert grouped.size().eq([6_000, 34_000, 6_000, 34_000]).all()
+    assert grouped["conversion"].nunique().eq(2).all()
+    assert grouped["visit"].nunique().eq(2).all()
+
+    config = deepcopy(load_config(PROJECT_ROOT / "configs/analysis.yaml"))
+    config["paths"]["raw_data"] = str(raw_path)
+    config["lightgbm"].update(
+        {
             "learning_rate": 0.1,
             "num_leaves": 7,
-            "min_data_in_leaf": 5,
-            "lambda_l2": 1.0,
-            "feature_fraction": 1.0,
-            "bagging_fraction": 1.0,
+            "min_data_in_leaf": 50,
             "max_bin": 31,
             "max_rounds": 20,
             "early_stopping_rounds": 4,
-            "deterministic": True,
-            "force_col_wise": True,
             "num_threads": 1,
-        },
-        "dr_learner": {"folds": 3, "fold_seed": 20260804},
-    }
-
-
-def _development_frame(rows: int = 600) -> pd.DataFrame:
-    rng = np.random.default_rng(7)
-    treatment = (np.arange(rows) % 7 != 0).astype(np.int8)
-    continuous = rng.normal(size=(rows, 4)).astype(np.float32)
-    probability = 1.0 / (
-        1.0 + np.exp(-(-1.2 + 0.7 * continuous[:, 0] + 0.4 * treatment))
-    )
-    conversion = (rng.random(rows) < probability).astype(np.int8)
-    visit = np.maximum(conversion, (rng.random(rows) < 0.35).astype(np.int8))
-    frame = pd.DataFrame(
-        {
-            "row_id": np.arange(rows, dtype=np.int64),
-            "split": np.where(np.arange(rows) < 450, "train", "validation"),
-            "treatment": treatment,
-            "conversion": conversion,
-            "visit": visit,
         }
     )
-    for index, name in enumerate(["f0", "f2", "f7", "f10"]):
-        frame[name] = continuous[:, index]
-    for index, name in enumerate(["f1", "f3", "f4", "f5", "f6", "f8", "f9", "f11"]):
-        frame[name] = pd.array((np.arange(rows) + index) % 4, dtype="Int32")
-    return frame
-
-
-def test_aipw_pseudo_outcome_matches_formula() -> None:
-    treatment = np.array([1, 0, 1, 0])
-    outcome = np.array([1, 1, 0, 0])
-    m0 = np.array([0.1, 0.2, 0.3, 0.4])
-    m1 = np.array([0.5, 0.6, 0.7, 0.8])
-    propensity = 0.8
-    expected = m1 - m0 + treatment * (outcome - m1) / propensity - (
-        1 - treatment
-    ) * (outcome - m0) / (1 - propensity)
-    np.testing.assert_allclose(
-        aipw_scores(outcome, treatment, m0, m1, propensity), expected
-    )
+    return config, frame, category_path
 
 
 def test_fold_assignment_is_seeded_and_deterministic() -> None:
@@ -90,22 +100,11 @@ def test_fold_assignment_is_seeded_and_deterministic() -> None:
     assert not np.array_equal(first, _fold_ids(rows, 3, 20260805))
 
 
-def test_fit_save_load_and_predict_bundle(tmp_path: Path) -> None:
-    raw_path = tmp_path / "raw.csv.gz"
-    raw_path.write_bytes(b"official-source-placeholder-for-unit-test")
-    category_path = tmp_path / "category_maps.json"
-    category_path.write_text(
-        json.dumps(
-            {
-                "features": {
-                    name: [0.0, 1.0, 2.0, 3.0]
-                    for name in ["f1", "f3", "f4", "f5", "f6", "f8", "f9", "f11"]
-                }
-            }
-        )
-    )
-    config = _config(raw_path)
-    frame = _development_frame()
+def test_fit_save_load_and_predict_bundle(
+    tmp_path: Path,
+    official_development_fixture: tuple[dict, pd.DataFrame, Path],
+) -> None:
+    config, frame, category_path = official_development_fixture
     output_dir = tmp_path / "models"
 
     manifest = fit_model_bundle(config, frame, category_path, output_dir)
@@ -135,12 +134,12 @@ def test_fit_save_load_and_predict_bundle(tmp_path: Path) -> None:
     assert ((visit_m1 >= 0) & (visit_m1 <= 1)).all()
 
 
-def test_fit_rejects_test_rows(tmp_path: Path) -> None:
-    raw_path = tmp_path / "raw.csv.gz"
-    raw_path.write_bytes(b"fixture")
-    category_path = tmp_path / "category_maps.json"
-    category_path.write_text('{"features": {}}')
-    frame = _development_frame()
-    frame.loc[0, "split"] = "test"
+def test_fit_rejects_test_rows(
+    tmp_path: Path,
+    official_development_fixture: tuple[dict, pd.DataFrame, Path],
+) -> None:
+    config, frame, category_path = official_development_fixture
+    forbidden = frame.copy()
+    forbidden.loc[0, "split"] = "test"
     with pytest.raises(ValueError, match="only train and validation"):
-        fit_model_bundle(_config(raw_path), frame, category_path, tmp_path / "models")
+        fit_model_bundle(config, forbidden, category_path, tmp_path / "models")
