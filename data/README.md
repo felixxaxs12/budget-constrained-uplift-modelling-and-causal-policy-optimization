@@ -9,7 +9,6 @@ This project uses the corrected `CRITEO-UPLIFTv2.1` dataset released by Criteo A
 - File name: `criteo-uplift-v2.1.csv.gz`
 - File size: 311,422,618 bytes
 - Rows: 13,979,592
-- SHA-256: `2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc`
 
 Download and verify the file with:
 
@@ -17,7 +16,7 @@ Download and verify the file with:
 python scripts/download_data.py
 ```
 
-The script checks the byte size, SHA-256 checksum, gzip stream, ordered schema, and row count. It saves the verified file under `data/raw/`, which Git ignores.
+The script checks the byte size, gzip stream, ordered schema, and row count. It saves the verified file under `data/raw/`, which Git ignores.
 
 ## Columns
 

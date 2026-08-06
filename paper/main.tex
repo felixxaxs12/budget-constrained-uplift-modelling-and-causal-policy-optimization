@@ -3,7 +3,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
-\usepackage{CJKutf8}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -33,13 +32,6 @@ Targeting systems often rank users by their predicted outcome under treatment, a
 \end{abstract}
 
 \noindent\textbf{Keywords:} uplift modelling; heterogeneous treatment effects; policy evaluation; capacity constraints; doubly robust learning; randomized experiments
-
-\begin{CJK*}{UTF8}{gbsn}
-\section*{摘要}
-投放系统常按照用户接受处理后的预测结果排序，但实际决策目标是处理带来的增量效果。本文使用修正后的 CRITEO-UPLIFTv2 公开数据，比较均匀随机分配、处理条件下的预测反应分数、T-learner 与三折交叉拟合的 doubly robust learner。数据包含 13,979,592 条随机广告实验记录，主要结局为转化，并采用固定的训练、验证和测试划分。在评估程序载入测试结局列或将其与预测结果合并之前，拟合模型与评分规则均已固定。本文在 5\%、10\%、20\%、50\% 与 100\% 容量下，使用测试集的 augmented inverse-probability-weighted policy value 进行评估；不确定性通过 1,000 次配对 bootstrap 估计，每次均对测试行重抽样；所得区间是在模型保持固定条件下计算的逐点 95\% 百分位区间。全部数据的转化平均处理效应为 0.1152 个百分点。容量为 10\% 时，处理条件下的预测反应排序相较随机分配，每十万名测试用户的预计增量转化高 77.3 次，区间为 65.1 至 90.0；其估计值也比 T-learner 高 9.0 次，并比 doubly robust learner 高 29.7 次。处理条件下的预测反应排序在所有受限容量下均有最高的转化 policy value 估计值，而 100\% 容量下各策略依定义相同。结果只描述公开基准数据中的离线政策评估，不代表已经实现的广告成效或货币回报。
-
-\noindent\textbf{关键词：} uplift modelling；异质处理效应；政策评估；容量限制；双重稳健学习；随机实验
-\end{CJK*}
 
 \section{Introduction}
 
@@ -75,11 +67,6 @@ CRITEO-UPLIFTv2 contains observations collected from several randomized advertis
 
 Treatment denotes randomized assignment. Exposure is realized after assignment, so it is excluded from all features, estimands, scores, and policies. The analysis therefore estimates intention-to-treat effects, not effects among exposed users. The release is anonymized and was sampled by its publisher for benchmark use. Results target the released-data distribution, not population-weighted advertising traffic.
 
-The raw gzip file has the following SHA-256 digest:
-\begin{center}
-\texttt{\small 2716e1bf0fd157a93b5bf86924d90884}\\
-\texttt{\small 19dfbac2022c6cd90030220634f616dc}.
-\end{center}
 Before fitting, the pipeline checked the ordered schema, row count, finite feature values, binary domains, the absence of exposure in controls, and the implication from conversion to visit. Repeated anonymous rows were retained because no documented user identifier is available.
 
 \subsection{Fixed split and descriptive checks}
@@ -323,7 +310,7 @@ Policy scores therefore need direct evaluation under the decision rule and capac
 
 Code, configuration, and aggregate results are available in the
 \href{https://github.com/felixxaxs12/budget-constrained-uplift-modelling-and-causal-policy-optimization}{public project repository}.
-The raw Criteo dataset is not redistributed. The repository downloads the corrected artifact from the publisher and verifies its byte size, gzip integrity, ordered schema, row count, and SHA-256 digest. The dataset is licensed separately under CC BY-NC-SA 4.0 \citep{criteoDataset}. Project code is licensed under MIT, and the manuscript is licensed under CC BY 4.0.
+The raw Criteo dataset is not redistributed. The repository downloads the corrected artifact from the publisher and verifies its byte size, gzip integrity, ordered schema, and row count. The dataset is licensed separately under CC BY-NC-SA 4.0 \citep{criteoDataset}. Project code is licensed under MIT, and the manuscript is licensed under CC BY 4.0.
 
 This study is a secondary analysis of a public, anonymized benchmark. It collected no new participant data and assigned no new intervention. The analysis retains the publisher's anonymous feature names and reports only aggregate results. Treatment is analyzed as randomized assignment; the post-assignment exposure field is excluded from modelling.
 

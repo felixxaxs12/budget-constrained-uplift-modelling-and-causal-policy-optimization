@@ -2,7 +2,7 @@
 
 This project asks a practical targeting question: if an advertiser can treat only a fixed share of eligible users, which ranking rule produces the most incremental conversions?
 
-I tested four allocation rules on 13,979,592 rows from the corrected CRITEO-UPLIFTv2.1 randomized advertising dataset. The analysis constrains the fraction of users treated; it does not optimize a monetary budget.
+I used 13,979,592 records from the corrected CRITEO-UPLIFTv2.1 randomized advertising dataset and evaluated four allocation rules on a held-out test set of 2,797,091 records. The analysis constrains the fraction of users treated; it does not optimize a monetary budget.
 
 [Paper](paper/main.pdf) | [Results](results/) | [Analysis code](src/uplift_policy/) | [Dashboard](#dashboard)
 
@@ -27,7 +27,7 @@ These are offline estimates for the released benchmark. They are not realized ca
 
 ## What I did
 
-- Downloaded the dataset from Criteo and checked its byte size, checksum, schema, row count, and gzip integrity.
+- Downloaded the dataset from Criteo and checked its byte size, schema, row count, and gzip integrity.
 - Treated randomized assignment as the intervention and excluded `exposure`, which occurs after assignment.
 - Used a fixed 60/20/20 train, validation, and test split. Test outcomes did not enter model selection or ranking construction.
 - Compared expected random allocation, predicted response under treatment, a LightGBM T-learner, and a three-fold cross-fitted doubly robust learner.
@@ -70,7 +70,7 @@ The dashboard reads the saved aggregate results. It does not load user-level dat
 | `results/model_metadata.json` | Selected boosting rounds and validation losses |
 | `paper/main.pdf` | Full paper by Yi Zhao |
 | `tests/` | Tests for data rules, estimators, models, pipeline order, and dashboard loading |
-| `data/README.md` | Official source, checksum, schema, citation, and dataset license |
+| `data/README.md` | Official source, file details, schema, citation, and dataset license |
 
 ## Data and license
 
