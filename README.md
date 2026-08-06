@@ -1,103 +1,77 @@
-# Budget-Constrained Uplift Modelling and Causal Policy Optimization
+# Capacity-Constrained Uplift Modelling on Criteo
 
-This repository evaluates whether causal targeting improves incremental conversions over response-based targeting when only a fixed fraction of users can receive treatment.
+This project asks a practical targeting question: if an advertiser can treat only a fixed share of eligible users, which ranking rule produces the most incremental conversions?
 
-The study uses 13,979,592 records from the official randomized `CRITEO-UPLIFTv2` dataset and its corrected `v2.1` artifact. It treats `treatment` as the randomized intention-to-treat assignment and excludes the post-assignment `exposure` field from every model.
+I tested four allocation rules on 13,979,592 rows from the corrected CRITEO-UPLIFTv2.1 randomized advertising dataset. The analysis constrains the fraction of users treated; it does not optimize a monetary budget.
 
-[Paper (PDF)](paper/main.pdf) · [LaTeX source](paper/main.tex) · [Canonical results](results/) · [Interactive explorer](#interactive-explorer)
+[Paper](paper/main.pdf) | [Results](results/) | [Analysis code](src/uplift_policy/) | [Dashboard](#dashboard)
 
-## Key results
+## Main result
 
-- The complete-source conversion average treatment effect was **0.1152 percentage points** (95% confidence interval 0.1085 to 0.1219). The visit effect was 1.0342 percentage points (1.0056 to 1.0629).
-- At 10% capacity, treated-response ranking exceeded expected random allocation by **77.3 estimated incremental conversions per 100,000 eligible test users** (pointwise 95% interval 65.1 to 90.0). It also exceeded the T-learner by 9.0 (1.8 to 15.3) and the doubly robust learner by 29.7 (21.8 to 37.5).
-- Treated-response ranking had the highest held-out conversion policy-value estimate at every constrained capacity tested (5%, 10%, 20%, and 50%). At 100%, all policies are identical by construction.
+Treated-response ranking performed better than the two estimated treatment-effect rankings in this experiment. At 10% capacity, held-out conversion policy values were:
 
-The capacities and reported policy contrasts were fixed before evaluation. The contrasts use 1,000 paired row-bootstrap replicates and are pointwise, conditional on the fitted models. These are offline estimates on the released benchmark, not realized campaign outcomes.
+| Allocation rule | Estimated incremental conversions per 100,000 eligible users |
+|---|---:|
+| Expected random allocation | 9.8 |
+| Treated-response ranking | 87.1 |
+| T-learner ranking | 78.1 |
+| Doubly robust learner ranking | 57.4 |
+
+The paired difference between treated-response and random allocation was 77.3 conversions per 100,000 (pointwise 95% interval: 65.1 to 90.0). Treated-response also exceeded the T-learner by 9.0 (1.8 to 15.3) and the doubly robust learner by 29.7 (21.8 to 37.5).
+
+Treated-response had the highest estimated conversion value at 5%, 10%, 20%, and 50% capacity. At 100%, every rule treats the same users and therefore has the same value. The complete-data conversion average treatment effect was 0.1152 percentage points (95% confidence interval: 0.1085 to 0.1219).
 
 ![Held-out policy values across treatment capacities](results/figures/policy_values.png)
 
-## Method
+These are offline estimates for the released benchmark. They are not realized campaign outcomes or return-on-investment estimates.
 
-Four allocation rules are compared at capacities of 5%, 10%, 20%, 50%, and 100%:
+## What I did
 
-- expected uniform random allocation;
-- response ranking by predicted conversion under treatment;
-- a T-learner treatment-effect score; and
-- a cross-fitted doubly robust learner.
+- Downloaded the dataset from Criteo and checked its byte size, checksum, schema, row count, and gzip integrity.
+- Treated randomized assignment as the intervention and excluded `exposure`, which occurs after assignment.
+- Used a fixed 60/20/20 train, validation, and test split. Test outcomes did not enter model selection or ranking construction.
+- Compared expected random allocation, predicted response under treatment, a LightGBM T-learner, and a three-fold cross-fitted doubly robust learner.
+- Evaluated exact top-capacity policies with held-out augmented inverse-probability-weighted value estimates and 1,000 paired row-bootstrap replicates.
+- Reported Qini curves as a separate ranking diagnostic rather than treating them as policy value.
 
-Models are selected on train and validation data. The final comparison uses held-out augmented inverse-probability-weighted policy value, paired row-bootstrap intervals, and a separately computed fixed-propensity IPW Qini ranking diagnostic. Capacity denotes equal-cost user slots, not a monetary budget: the public data contain neither treatment costs nor conversion values.
+## Reproduce the analysis
 
-## Reproduce
-
-Python 3.11 through 3.13 is supported. LightGBM requires an OpenMP runtime; on macOS this is commonly installed with `brew install libomp`.
+Python 3.11 through 3.13 is supported. LightGBM needs an OpenMP runtime; on macOS, `brew install libomp` provides it.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev]"
+python -m pip install ".[dev]"
 python scripts/download_data.py
 uplift-policy prepare --config configs/analysis.yaml
 uplift-policy train --config configs/analysis.yaml
-# Commit the generated results/manifests/model_freeze.json, then continue
 uplift-policy evaluate --config configs/analysis.yaml
 pytest -q
 ```
 
-The downloader verifies the official file's byte size, SHA-256 checksum, gzip integrity, row count, and ordered schema. See [data/README.md](data/README.md) for provenance and licensing.
+The raw download, prepared data, and fitted models stay outside Git because of their size. The repository contains the aggregate tables and figures used in the paper.
 
-Evaluation deliberately requires a clean working tree and an exact tracked copy of the model-freeze manifest. This makes the fitted-model hashes, training commit, selected boosting rounds, and software versions auditable before held-out outcome columns are loaded for evaluation or joined to frozen predictions. Model binaries remain local.
-
-## Outputs
-
-The analysis writes aggregate tables, figures, model and run manifests under `results/`. Row-level predictions, fitted model files, processed Parquet data, and the raw dataset remain outside Git. The Streamlit application reads the committed aggregate outputs and does not recompute statistics.
-
-- [Average treatment effects](results/tables/average_treatment_effects.csv)
-- [Held-out policy values](results/tables/policy_values.csv)
-- [Paired policy contrasts](results/tables/policy_contrasts.csv)
-- [Qini coefficients](results/tables/qini_coefficients.csv)
-- [Run manifest](results/run_manifest.json)
-
-## Interactive explorer
+## Dashboard
 
 ```bash
 streamlit run app.py
 ```
 
-The explorer is read-only: it displays the committed aggregate results and never loads the raw user-level data.
+The dashboard reads the saved aggregate results. It does not load user-level data or recalculate the analysis.
 
-## Paper
+## Repository contents
 
-The repository includes the [compiled paper](paper/main.pdf), [LaTeX source](paper/main.tex), generated tables and figures, and an [arXiv-ready source archive](paper/arxiv-source.tar.gz). The archive can be rebuilt with:
+| Path | Contents |
+|---|---|
+| `src/uplift_policy/` | Data preparation, diagnostics, models, estimators, bootstrap, and pipeline |
+| `configs/analysis.yaml` | Seeds, split definition, model settings, capacities, and bootstrap settings |
+| `results/tables/` | Aggregate estimates used in the paper and dashboard |
+| `results/figures/` | Main result plots |
+| `results/model_metadata.json` | Selected boosting rounds and validation losses |
+| `paper/main.pdf` | Full paper by Yi Zhao |
+| `tests/` | Tests for data rules, estimators, models, pipeline order, and dashboard loading |
+| `data/README.md` | Official source, checksum, schema, citation, and dataset license |
 
-```bash
-python scripts/build_paper_assets.py
-make -C paper arxiv
-```
+## Data and license
 
-The paper has not been submitted to or endorsed by arXiv. See [paper/README.md](paper/README.md) for build details.
-
-## Repository structure
-
-```text
-configs/analysis.yaml       Locked analysis settings
-data/                       Provenance manifest and download instructions
-docs/reproducibility.md     Estimands, model lifecycle, and evaluation definitions
-scripts/download_data.py    Official-data downloader and integrity verification
-src/uplift_policy/          Data, audit, model, evaluation, and orchestration code
-tests/                      Algebraic and real-data integration checks
-results/                    Canonical aggregate tables, figures, and manifests
-paper/                      arXiv-style manuscript source and PDF
-app.py                      Read-only results explorer
-```
-
-## Scope
-
-Results describe offline policy evaluation within the released benchmark distribution. They are not estimates of advertiser ROI, realized campaign impact, exposure effects, or performance in a future deployment.
-
-## Citation
-
-Please use [CITATION.cff](CITATION.cff) to cite the software or the accompanying paper.
-
-## License
-
-Original code is released under the [MIT License](LICENSE). The Criteo dataset is not included in this repository and remains subject to Criteo's [CC BY-NC-SA 4.0 terms](https://creativecommons.org/licenses/by-nc-sa/4.0/). The manuscript is released under CC BY 4.0.
+The dataset is not copied into this repository. The download script obtains it from Criteo, and [data/README.md](data/README.md) records the exact artifact used. Criteo distributes the dataset under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). The project code is available under the [MIT License](LICENSE).

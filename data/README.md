@@ -1,39 +1,38 @@
-# Data provenance
+# Dataset
 
-This project uses `CRITEO-UPLIFTv2` through Criteo's official corrected `v2.1` artifact. Criteo describes the release as "un-biased"; this project attributes that wording to the publisher rather than claiming that every possible bias has been eliminated.
+This project uses the corrected `CRITEO-UPLIFTv2.1` dataset released by Criteo AI Lab. The data are downloaded from Criteo and are not stored in this repository.
 
-## Official artifact
+## File used
 
-- File: `criteo-uplift-v2.1.csv.gz`
-- Dataset page: https://ailab.criteo.com/criteo-uplift-prediction-dataset/
-- Official redirect: https://go.criteo.net/criteo-research-uplift-v2.1.csv.gz
-- Resolved Criteo object: https://criteostorage.blob.core.windows.net/criteo-research-datasets/criteo-uplift-v2.1.csv.gz
-- Locally verified size: 311,422,618 bytes
-- Locally verified rows: 13,979,592
+- Dataset page: <https://ailab.criteo.com/criteo-uplift-prediction-dataset/>
+- Download URL: <https://go.criteo.net/criteo-research-uplift-v2.1.csv.gz>
+- File name: `criteo-uplift-v2.1.csv.gz`
+- File size: 311,422,618 bytes
+- Rows: 13,979,592
 - SHA-256: `2716e1bf0fd157a93b5bf86924d9088419dfbac2022c6cd90030220634f616dc`
-- Full gzip read and CRC check: passed
-- Machine-readable record: [manifest.json](manifest.json)
 
-The ordered schema is `f0` through `f11`, followed by `treatment`, `conversion`, `visit`, and `exposure`. The source describes `f0`, `f2`, `f7`, and `f10` as continuous and the remaining feature columns as categorical. All feature tokens are stored numerically.
-
-`treatment` is the randomized assignment used for the intention-to-treat analysis. `conversion` is the primary outcome and `visit` is secondary. `exposure` is measured after assignment and is used only for structural validation.
-
-## Download
+Download and verify the file with:
 
 ```bash
 python scripts/download_data.py
 ```
 
-The raw file and a timestamped download receipt are saved under `data/raw/`, which Git ignores. The committed [manifest.json](manifest.json) remains an immutable provenance record, so downloading the data does not dirty the source tree before model fitting. This repository chooses not to mirror the dataset; users obtain it directly from Criteo and are responsible for complying with its terms.
+The script checks the byte size, SHA-256 checksum, gzip stream, ordered schema, and row count. It saves the verified file under `data/raw/`, which Git ignores.
+
+## Columns
+
+The ordered columns are `f0` through `f11`, followed by `treatment`, `conversion`, `visit`, and `exposure`.
+
+Criteo describes `f0`, `f2`, `f7`, and `f10` as continuous and the other feature columns as categorical. `treatment` is the randomized assignment used for the intention-to-treat analysis. `conversion` is the primary outcome and `visit` is secondary. `exposure` is measured after assignment, so it is excluded from every model and policy score.
 
 ## Citation and license
 
-Criteo requests citation of:
+The dataset accompanies:
 
-> Eustache Diemert, Artem Betlei, Christophe Renaudin, and Massih-Reza Amini. "A Large Scale Benchmark for Uplift Modeling." AdKDD and TargetAd, 2018.
+Eustache Diemert, Artem Betlei, Christophe Renaudin, and Massih-Reza Amini. "A Large Scale Benchmark for Uplift Modeling." AdKDD and TargetAd, 2018.
 
-The corrected dataset design is documented in:
+The corrected release is documented in:
 
-> Eustache Diemert, Artem Betlei, Christophe Renaudin, Massih-Reza Amini, Théophane Gregoir, and Thibaud Rahier. "A Large Scale Benchmark for Individual Treatment Effect Prediction and Uplift Modeling." 2021.
+Eustache Diemert, Artem Betlei, Christophe Renaudin, Massih-Reza Amini, Theophane Gregoir, and Thibaud Rahier. "A Large Scale Benchmark for Individual Treatment Effect Prediction and Uplift Modeling." 2021.
 
-Dataset license: [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+Criteo distributes the dataset under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).

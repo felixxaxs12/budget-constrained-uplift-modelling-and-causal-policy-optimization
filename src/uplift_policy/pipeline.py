@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -38,20 +37,6 @@ def _paths(config: Mapping[str, Any]) -> tuple[Path, Path, Path, Path]:
     return raw, processed, model_dir, results
 
 
-def _preparation_spec(config: Mapping[str, Any]) -> dict[str, Any]:
-    """Return only settings that determine prepared data and category codes."""
-    return {
-        "seed": config["seed"],
-        "paths": {
-            name: config["paths"][name]
-            for name in ("raw_data", "processed_data", "model_dir")
-        },
-        "features": config["features"],
-        "split": config["split"],
-        "duckdb": config["duckdb"],
-    }
-
-
 def _category_maps(path: Path) -> dict[str, list[float]]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     mappings = payload.get("features")
@@ -60,59 +45,20 @@ def _category_maps(path: Path) -> dict[str, list[float]]:
     return mappings
 
 
-def _write_preparation_fingerprints(
-    manifest: dict[str, Any], config: Mapping[str, Any]
-) -> dict[str, Any]:
-    raw, processed, model_dir, _ = _paths(config)
-    category_path = model_dir / "category_map.json"
-    manifest["fingerprints"] = {
-        "preparation_config_sha256": model_io._canonical_hash(
-            _preparation_spec(config)
-        ),
-        "raw_data_sha256": model_io._sha256_file(raw),
-        "category_map_sha256": model_io._sha256_file(category_path),
-    }
-    (processed / "_prepare_manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    return manifest
-
-
-def _matching_preparation(config: Mapping[str, Any]) -> dict[str, Any]:
-    raw, processed, model_dir, _ = _paths(config)
+def _prepared_manifest(config: Mapping[str, Any]) -> dict[str, Any]:
+    """Read the summary written by the data-preparation command."""
+    _, processed, _, _ = _paths(config)
     manifest_path = processed / "_prepare_manifest.json"
-    category_path = model_dir / "category_map.json"
-    if not manifest_path.is_file() or not category_path.is_file():
-        raise FileNotFoundError("Prepared data or its category map is missing")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    expected = {
-        "preparation_config_sha256": model_io._canonical_hash(
-            _preparation_spec(config)
-        ),
-        "raw_data_sha256": model_io._sha256_file(raw),
-        "category_map_sha256": model_io._sha256_file(category_path),
-    }
-    if manifest.get("fingerprints") != expected:
-        raise ValueError(
-            "Existing prepared data does not match the current source or preparation settings"
-        )
-    if Path(manifest["source"]).resolve() != raw.resolve():
-        raise ValueError("Prepared-data source path does not match the configuration")
-    if Path(manifest["processed"]).resolve() != processed.resolve():
-        raise ValueError("Prepared-data output path does not match the configuration")
-    return manifest
+    if not manifest_path.is_file():
+        raise FileNotFoundError("Run the prepare command before training or evaluation")
+    return json.loads(manifest_path.read_text(encoding="utf-8"))
 
 
-def _save_figure(figure: Any, stem: Path, *, pdf: bool) -> list[Path]:
+def _save_figure(figure: Any, stem: Path) -> Path:
     stem.parent.mkdir(parents=True, exist_ok=True)
     png = stem.with_suffix(".png")
     figure.savefig(png, dpi=300, bbox_inches="tight")
-    outputs = [png]
-    if pdf:
-        pdf_path = stem.with_suffix(".pdf")
-        figure.savefig(pdf_path, bbox_inches="tight")
-        outputs.append(pdf_path)
-    return outputs
+    return png
 
 
 def _pyplot() -> Any:
@@ -148,7 +94,7 @@ def _plot_balance(balance: pd.DataFrame, output: Path) -> None:
     )
     axis.spines[["top", "right"]].set_visible(False)
     figure.tight_layout()
-    _save_figure(figure, output, pdf=False)
+    _save_figure(figure, output)
     plt.close(figure)
 
 
@@ -157,9 +103,9 @@ def run_prepare(config: Mapping[str, Any]) -> dict[str, Any]:
     _, processed, model_dir, results = _paths(config)
     manifest_path = processed / "_prepare_manifest.json"
     if manifest_path.exists():
-        manifest = _matching_preparation(config)
+        manifest = _prepared_manifest(config)
     else:
-        manifest = _write_preparation_fingerprints(prepare_data(config), config)
+        manifest = prepare_data(config)
 
     feature_names = [
         *config["features"]["continuous"],
@@ -255,11 +201,8 @@ def run_prepare(config: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def run_train(config: Mapping[str, Any]) -> dict[str, Any]:
-    """Fit the frozen policy and nuisance models using development rows only."""
-    _, dirty = model_io._git_state()
-    if dirty:
-        raise RuntimeError("Model fitting requires a clean source tree")
-    _matching_preparation(config)
+    """Fit the policy and nuisance models using development rows only."""
+    _prepared_manifest(config)
     _, _, model_dir, results = _paths(config)
     feature_names = [
         *config["features"]["continuous"],
@@ -275,45 +218,23 @@ def run_train(config: Mapping[str, Any]) -> dict[str, Any]:
     development = load_splits(
         config, ["train", "validation"], columns=columns
     )
-    category_path = model_dir / "category_map.json"
     development = apply_category_maps(
         development,
-        _category_maps(category_path),
+        _category_maps(model_dir / "category_map.json"),
         config["features"]["categorical"],
     )
-    manifest = model_io.fit_model_bundle(
-        config, development, category_path, model_dir
-    )
-    private_manifest = model_dir / "freeze_manifest.json"
-    tracked_manifest = results / "manifests" / "model_freeze.json"
-    tracked_manifest.parent.mkdir(parents=True, exist_ok=True)
-    tracked_manifest.write_bytes(private_manifest.read_bytes())
+    manifest = model_io.fit_model_bundle(config, development, model_dir)
+    public_metadata = results / "model_metadata.json"
+    public_metadata.parent.mkdir(parents=True, exist_ok=True)
+    public_metadata.write_bytes((model_dir / "model_metadata.json").read_bytes())
     return manifest
 
 
-def _verify_freeze(config: Mapping[str, Any]) -> model_io.ModelBundle:
-    """Verify every frozen input and fitted-model hash without reading outcomes."""
-    raw, _, model_dir, results = _paths(config)
-    category_path = model_dir / "category_map.json"
-    private_manifest = model_dir / "freeze_manifest.json"
-    tracked_manifest = results / "manifests" / "model_freeze.json"
-    if not private_manifest.is_file() or not tracked_manifest.is_file():
-        raise FileNotFoundError("Private or tracked model-freeze manifest is missing")
-    if private_manifest.read_bytes() != tracked_manifest.read_bytes():
-        raise ValueError("Tracked and private model-freeze manifests differ")
+def _load_models(config: Mapping[str, Any]) -> model_io.ModelBundle:
+    """Load fitted models and check that their feature contract matches the config."""
+    _, _, model_dir, _ = _paths(config)
     bundle = model_io.load_model_bundle(model_dir)
     manifest = bundle.manifest
-    expected_hashes = {
-        "raw_data_sha256": model_io._sha256_file(raw),
-        "config_canonical_sha256": model_io._canonical_hash(config),
-        "category_map_sha256": model_io._sha256_file(category_path),
-    }
-    if manifest.get("format_version") != 1:
-        raise ValueError("Unsupported freeze manifest format")
-    if manifest.get("source", {}).get("git_dirty") is not False:
-        raise ValueError("Frozen models were fitted from a dirty source tree")
-    if manifest.get("hashes") != expected_hashes:
-        raise ValueError("Freeze manifest does not match the current data or configuration")
     expected_features = [
         *config["features"]["continuous"],
         *config["features"]["categorical"],
@@ -322,9 +243,9 @@ def _verify_freeze(config: Mapping[str, Any]) -> model_io.ModelBundle:
         "all": expected_features,
         "categorical": list(config["features"]["categorical"]),
     }:
-        raise ValueError("Frozen model features do not match the configuration")
+        raise ValueError("Model features do not match the configuration")
     if float(manifest.get("propensity", -1)) != float(config["propensity"]):
-        raise ValueError("Frozen propensity does not match the configuration")
+        raise ValueError("Model propensity does not match the configuration")
     return bundle
 
 
@@ -458,7 +379,7 @@ def _qini_tables(
     return pd.DataFrame(coefficients), pd.DataFrame(curve_rows)
 
 
-def _plot_policy_values(values: pd.DataFrame, output: Path) -> list[Path]:
+def _plot_policy_values(values: pd.DataFrame, output: Path) -> Path:
     plt = _pyplot()
 
     outcomes = list(dict.fromkeys(values["outcome"]))
@@ -496,12 +417,12 @@ def _plot_policy_values(values: pd.DataFrame, output: Path) -> list[Path]:
         fontsize=8,
     )
     figure.tight_layout(rect=(0.0, 0.05, 1.0, 1.0))
-    outputs = _save_figure(figure, output, pdf=True)
+    saved = _save_figure(figure, output)
     plt.close(figure)
-    return outputs
+    return saved
 
 
-def _plot_contrasts(contrasts: pd.DataFrame, output: Path) -> list[Path]:
+def _plot_contrasts(contrasts: pd.DataFrame, output: Path) -> Path:
     plt = _pyplot()
 
     subset = contrasts.loc[contrasts["outcome"].eq("conversion")]
@@ -540,12 +461,12 @@ def _plot_contrasts(contrasts: pd.DataFrame, output: Path) -> list[Path]:
         fontsize=8,
     )
     figure.tight_layout(rect=(0.0, 0.05, 1.0, 1.0))
-    outputs = _save_figure(figure, output, pdf=True)
+    saved = _save_figure(figure, output)
     plt.close(figure)
-    return outputs
+    return saved
 
 
-def _plot_qini(curves: pd.DataFrame, output: Path) -> list[Path]:
+def _plot_qini(curves: pd.DataFrame, output: Path) -> Path:
     plt = _pyplot()
 
     figure, axis = plt.subplots(figsize=(7.2, 4.8))
@@ -564,24 +485,20 @@ def _plot_qini(curves: pd.DataFrame, output: Path) -> list[Path]:
     axis.legend(frameon=False)
     axis.spines[["top", "right"]].set_visible(False)
     figure.tight_layout()
-    outputs = _save_figure(figure, output, pdf=True)
+    saved = _save_figure(figure, output)
     plt.close(figure)
-    return outputs
+    return saved
 
 
 def run_evaluate(config: Mapping[str, Any]) -> dict[str, Any]:
-    """Evaluate frozen policies after enforcing the evaluation-data access gate."""
-    source_commit, source_dirty = model_io._git_state()
-    if source_dirty:
-        raise RuntimeError("Evaluation requires a clean source tree before outputs are written")
-    preparation_manifest = _matching_preparation(config)
-    bundle = _verify_freeze(config)
-    _, processed, model_dir, results = _paths(config)
+    """Evaluate fitted policies on the held-out test split."""
+    _prepared_manifest(config)
+    bundle = _load_models(config)
+    _, _, model_dir, results = _paths(config)
     feature_names = list(bundle.manifest["features"]["all"])
     feature_columns = ["row_id", *feature_names, "split"]
 
-    # Test outcome columns are not loaded for evaluation or joined to predictions
-    # until every hash is verified and predictions exist from covariates alone.
+    # Predictions are created from covariates before test outcomes are loaded.
     test_features = load_splits(config, ["test"], columns=feature_columns)
     test_features = apply_category_maps(
         test_features,
@@ -654,71 +571,14 @@ def run_evaluate(config: Mapping[str, Any]) -> dict[str, Any]:
         frame.to_csv(path, index=False)
 
     figure_outputs = [
-        *_plot_policy_values(policy_values, figures / "policy_values"),
-        *_plot_contrasts(contrasts, figures / "conversion_policy_contrasts"),
-        *_plot_qini(qini_curves, figures / "qini_curves"),
+        _plot_policy_values(policy_values, figures / "policy_values"),
+        _plot_contrasts(contrasts, figures / "conversion_policy_contrasts"),
+        _plot_qini(qini_curves, figures / "qini_curves"),
     ]
-    evaluation = {
-        "evaluation_sample": "held_out_test",
-        "test_rows": n_rows,
-        "treatment_propensity": propensity,
-        "capacities": [float(value) for value in config["capacities"]],
-        "bootstrap": {
-            "method": "paired_nonparametric_row_bootstrap",
-            "replicates": int(config["bootstrap"]["replicates"]),
-            "seed": int(config["bootstrap"]["seed"]),
-            "interval": "pointwise_percentile_95_percent",
-        },
-        "policy_value_unit": "incremental_outcomes_per_test_row",
-        "average_treatment_effect_sample": "complete_source",
-        "test_cohort_count_definition": "policy_value multiplied by test_rows",
-        "qini_curve_points_saved": int(qini_curves["fraction"].nunique()),
-    }
-    evaluation_path = results / "evaluation.json"
-    evaluation_path.parent.mkdir(parents=True, exist_ok=True)
-    evaluation_path.write_text(json.dumps(evaluation, indent=2) + "\n", encoding="utf-8")
-
-    output_paths = [*table_outputs.values(), *figure_outputs, evaluation_path]
-    run_manifest = {
-        "created_utc": datetime.now(timezone.utc).isoformat(),
-        "command": "evaluate",
-        "integrity": {
-            "freeze_verified_before_test_outcomes_loaded_for_evaluation": True,
-            "predictions_created_before_test_outcomes_loaded_for_evaluation": True,
-            "test_used_for_model_selection": False,
-        },
-        "inputs": {
-            "prepared_manifest_sha256": model_io._sha256_file(
-                processed / "_prepare_manifest.json"
-            ),
-            "freeze_manifest_sha256": model_io._sha256_file(
-                model_dir / "freeze_manifest.json"
-            ),
-            "tracked_model_freeze_sha256": model_io._sha256_file(
-                results / "manifests" / "model_freeze.json"
-            ),
-            **bundle.manifest["hashes"],
-        },
-        "source": {
-            "git_commit_before_outputs": source_commit,
-            "git_dirty_before_outputs": source_dirty,
-        },
-        "test_rows": n_rows,
-        "outputs": {
-            str(path.relative_to(results)): model_io._sha256_file(path)
-            for path in output_paths
-        },
-        "prepared_rows": preparation_manifest["rows"],
-    }
-    run_manifest_path = results / "run_manifest.json"
-    run_manifest_path.write_text(
-        json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
     return {
         "test_rows": n_rows,
         "tables": [str(path) for path in table_outputs.values()],
         "figures": [str(path) for path in figure_outputs],
-        "run_manifest": str(run_manifest_path),
     }
 
 

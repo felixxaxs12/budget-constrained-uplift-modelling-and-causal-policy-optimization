@@ -21,7 +21,7 @@ from uplift_policy.data import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_frozen_config_contract() -> None:
+def test_config_contract() -> None:
     config = load_config(ROOT / "configs" / "analysis.yaml")
     assert config["seed"] == 20260803
     assert config["split"]["train_buckets"] == [0, 1, 2, 3, 4, 5]

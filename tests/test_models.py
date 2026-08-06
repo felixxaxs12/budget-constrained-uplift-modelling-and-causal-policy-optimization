@@ -20,7 +20,7 @@ FIXTURE_ROWS_PER_SPLIT = {0: 6_000, 1: 34_000}
 
 
 @pytest.fixture(scope="session")
-def official_development_fixture() -> tuple[dict, pd.DataFrame, Path]:
+def official_development_fixture() -> tuple[dict, pd.DataFrame]:
     raw_path = PROJECT_ROOT / "data/raw/criteo-uplift-v2.1.csv.gz"
     processed_path = PROJECT_ROOT / "data/processed/criteo"
     category_path = PROJECT_ROOT / "artifacts/models/category_map.json"
@@ -88,7 +88,7 @@ def official_development_fixture() -> tuple[dict, pd.DataFrame, Path]:
             "num_threads": 1,
         }
     )
-    return config, frame, category_path
+    return config, frame
 
 
 def test_fold_assignment_is_seeded_and_deterministic() -> None:
@@ -102,12 +102,12 @@ def test_fold_assignment_is_seeded_and_deterministic() -> None:
 
 def test_fit_save_load_and_predict_bundle(
     tmp_path: Path,
-    official_development_fixture: tuple[dict, pd.DataFrame, Path],
+    official_development_fixture: tuple[dict, pd.DataFrame],
 ) -> None:
-    config, frame, category_path = official_development_fixture
+    config, frame = official_development_fixture
     output_dir = tmp_path / "models"
 
-    manifest = fit_model_bundle(config, frame, category_path, output_dir)
+    manifest = fit_model_bundle(config, frame, output_dir)
 
     assert set(manifest["models"]) == {
         "conversion_m0",
@@ -119,8 +119,7 @@ def test_fit_save_load_and_predict_bundle(
     assert set(manifest["selected_rounds"]) == set(manifest["models"])
     assert manifest["folds"] == 3
     assert manifest["propensity"] == 0.85
-    assert manifest["hashes"]["raw_data_sha256"]
-    assert manifest["source"]["git_commit"]
+    assert set(manifest["validation_losses"]) == set(manifest["models"])
 
     loaded = load_model_bundle(output_dir)
     prediction_frame = frame.iloc[:25]
@@ -136,10 +135,10 @@ def test_fit_save_load_and_predict_bundle(
 
 def test_fit_rejects_test_rows(
     tmp_path: Path,
-    official_development_fixture: tuple[dict, pd.DataFrame, Path],
+    official_development_fixture: tuple[dict, pd.DataFrame],
 ) -> None:
-    config, frame, category_path = official_development_fixture
+    config, frame = official_development_fixture
     forbidden = frame.copy()
     forbidden.loc[0, "split"] = "test"
     with pytest.raises(ValueError, match="only train and validation"):
-        fit_model_bundle(config, forbidden, category_path, tmp_path / "models")
+        fit_model_bundle(config, forbidden, tmp_path / "models")

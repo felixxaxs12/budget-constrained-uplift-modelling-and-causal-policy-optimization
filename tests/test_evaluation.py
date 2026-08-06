@@ -6,12 +6,12 @@ import numpy as np
 import pytest
 
 from uplift_policy.evaluation import (
-    LOCKED_CONTRASTS,
+    POLICY_CONTRASTS,
     aipw_scores,
     binary_ate,
     bootstrap_count_vectors,
     expected_random_value,
-    locked_contrasts,
+    policy_contrasts,
     paired_row_bootstrap,
     percentile_interval,
     policy_order,
@@ -87,15 +87,15 @@ def test_policy_and_expected_random_values_use_floor_k_over_n() -> None:
     assert expected_random_value(psi, 0.49) == pytest.approx(0.625)
 
 
-def test_locked_contrasts_have_only_the_five_prespecified_comparisons() -> None:
+def test_policy_contrasts_have_the_five_prespecified_comparisons() -> None:
     values = {
         "random": 1.0,
         "response": 2.0,
         "t_learner": 4.0,
         "dr_learner": 7.0,
     }
-    contrasts = locked_contrasts(values)
-    assert tuple(contrasts) == tuple(item[0] for item in LOCKED_CONTRASTS)
+    contrasts = policy_contrasts(values)
+    assert tuple(contrasts) == tuple(item[0] for item in POLICY_CONTRASTS)
     assert contrasts == {
         "response_minus_random": 1.0,
         "t_learner_minus_random": 3.0,
@@ -171,7 +171,7 @@ def test_paired_bootstrap_shares_counts_and_enforces_full_capacity() -> None:
             result.point_policy_values["conversion"]["random"][-1]
         )
 
-    for contrast in (item[0] for item in LOCKED_CONTRASTS):
+    for contrast in (item[0] for item in POLICY_CONTRASTS):
         np.testing.assert_array_equal(
             result.bootstrap_contrasts["conversion"][contrast][:, -1],
             np.zeros(40),

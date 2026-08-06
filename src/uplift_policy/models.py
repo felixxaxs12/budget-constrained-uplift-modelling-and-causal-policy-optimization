@@ -1,4 +1,4 @@
-"""Fit and freeze the pre-specified LightGBM policy models.
+"""Fit the pre-specified LightGBM policy models.
 
 The caller supplies features whose categorical columns have already been mapped
 by :mod:`uplift_policy.data`.  This module never learns or changes that mapping.
@@ -7,13 +7,8 @@ by :mod:`uplift_policy.data`.  This module never learns or changes that mapping.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from hashlib import sha256
-from importlib.metadata import version
 import json
 from pathlib import Path
-import platform
-import subprocess
 from typing import Any, Mapping, Sequence
 
 import lightgbm as lgb
@@ -203,43 +198,9 @@ def _cross_fitted_conversion_pseudo_outcomes(
     return pseudo
 
 
-def _sha256_file(path: Path) -> str:
-    digest = sha256()
-    with path.open("rb") as source:
-        for block in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def _canonical_hash(value: Mapping[str, Any]) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
-    return sha256(payload).hexdigest()
-
-
-def _git_state() -> tuple[str, bool]:
-    repository = Path(__file__).resolve().parents[2]
-    commit = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=repository,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    dirty = bool(
-        subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=repository,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    )
-    return commit, dirty
-
-
 @dataclass
 class ModelBundle:
-    """Frozen fitted models and their audit manifest."""
+    """Fitted models and the metadata needed to use them."""
 
     models: dict[str, lgb.Booster]
     manifest: dict[str, Any]
@@ -276,18 +237,17 @@ class ModelBundle:
 def fit_model_bundle(
     config: Mapping[str, Any],
     development_df: pd.DataFrame,
-    category_map_path: str | Path,
     output_dir: str | Path,
 ) -> dict[str, Any]:
-    """Fit all pre-specified models and write a reproducibility freeze manifest."""
+    """Fit all pre-specified models and save their metadata."""
 
     split_values = set(development_df["split"].unique())
     if split_values != {"train", "validation"}:
         raise ValueError("development_df must contain only train and validation rows")
     if float(config["propensity"]) != 0.85:
-        raise ValueError("the frozen treatment propensity must equal 0.85")
+        raise ValueError("the treatment propensity must equal 0.85")
     if int(config["dr_learner"]["folds"]) != 3:
-        raise ValueError("the frozen DR learner must use exactly three folds")
+        raise ValueError("the DR learner must use exactly three folds")
 
     feature_names, categorical = _feature_names(config)
     train = development_df.loc[development_df["split"] == "train"]
@@ -412,21 +372,13 @@ def fit_model_bundle(
 
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
-    model_files: dict[str, dict[str, str]] = {}
+    model_files: dict[str, str] = {}
     for name, model in final_models.items():
         model_path = destination / f"{name}.txt"
         model.save_model(str(model_path), num_iteration=selected_rounds[name])
-        model_files[name] = {
-            "path": model_path.name,
-            "sha256": _sha256_file(model_path),
-        }
+        model_files[name] = model_path.name
 
-    category_path = Path(category_map_path)
-    raw_path = Path(config["paths"]["raw_data"])
-    commit, dirty = _git_state()
     manifest: dict[str, Any] = {
-        "format_version": 1,
-        "created_utc": datetime.now(timezone.utc).isoformat(),
         "features": {"all": feature_names, "categorical": categorical},
         "propensity": float(config["propensity"]),
         "seeds": {"model": seed, "fold": int(config["dr_learner"]["fold_seed"])},
@@ -439,38 +391,24 @@ def fit_model_bundle(
             "dr_learner": "dr_learner",
         },
         "models": model_files,
-        "hashes": {
-            "raw_data_sha256": _sha256_file(raw_path),
-            "config_canonical_sha256": _canonical_hash(config),
-            "category_map_sha256": _sha256_file(category_path),
-        },
-        "source": {"git_commit": commit, "git_dirty": dirty},
-        "software": {
-            "python": platform.python_version(),
-            "lightgbm": version("lightgbm"),
-            "numpy": version("numpy"),
-            "pandas": version("pandas"),
-        },
         "development_rows": {
             "train": int(train_rows),
             "validation": int(validation_rows),
             "total": int(len(development_df)),
         },
     }
-    manifest_path = destination / "freeze_manifest.json"
+    manifest_path = destination / "model_metadata.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     return manifest
 
 
 def load_model_bundle(output_dir: str | Path) -> ModelBundle:
-    """Load a frozen bundle, rejecting model files that do not match the manifest."""
+    """Load a fitted model bundle."""
 
     source = Path(output_dir)
-    manifest = json.loads((source / "freeze_manifest.json").read_text())
+    manifest = json.loads((source / "model_metadata.json").read_text())
     models: dict[str, lgb.Booster] = {}
-    for name, record in manifest["models"].items():
-        model_path = source / record["path"]
-        if _sha256_file(model_path) != record["sha256"]:
-            raise ValueError(f"model hash mismatch: {name}")
+    for name, file_name in manifest["models"].items():
+        model_path = source / file_name
         models[name] = lgb.Booster(model_file=str(model_path))
     return ModelBundle(models=models, manifest=manifest)

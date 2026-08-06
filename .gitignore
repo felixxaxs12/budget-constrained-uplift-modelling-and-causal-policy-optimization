@@ -3,17 +3,15 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+build/
+*.egg-info/
 
-# The official dataset and fitted models are reproducible but too large for Git.
 data/raw/
 data/processed/
 artifacts/models/
-
-# Local analysis caches and generated manuscript build files.
 *.duckdb
 paper/*.aux
 paper/*.bbl
-!paper/main.bbl
 paper/*.blg
 paper/*.fdb_latexmk
 paper/*.fls

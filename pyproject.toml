@@ -1,29 +1,21 @@
 [build-system]
-requires = ["setuptools>=77"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "uplift-policy"
-description = "Reproducible capacity-constrained causal targeting on the Criteo uplift benchmark"
-readme = "README.md"
+version = "0.1.0"
 requires-python = ">=3.11,<3.14"
-license = "MIT"
-authors = [{ name = "Yi Zhao" }]
 dependencies = [
-  "certifi==2026.7.22",
   "duckdb==1.5.5",
-  "joblib==1.5.3",
   "lightgbm==4.7.0",
   "matplotlib==3.11.1",
   "numpy==2.5.1",
   "pandas==3.0.5",
-  "pyarrow==24.0.0",
   "PyYAML==6.0.3",
   "scikit-learn==1.9.0",
-  "scipy==1.18.0",
   "streamlit==1.60.0",
 ]
-dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = ["pytest==9.1.1"]
@@ -31,12 +23,5 @@ dev = ["pytest==9.1.1"]
 [project.scripts]
 uplift-policy = "uplift_policy.pipeline:main"
 
-[tool.setuptools.dynamic]
-version = { attr = "uplift_policy.__version__" }
-
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q"

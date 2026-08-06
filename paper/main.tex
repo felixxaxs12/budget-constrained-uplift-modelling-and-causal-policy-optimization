@@ -29,7 +29,7 @@ Held-Out Policy Evaluation}
 \maketitle
 
 \begin{abstract}
-Targeting systems often rank users by their predicted outcome under treatment, although the decision objective is the incremental effect of treatment. Whether a conditional treatment effect score improves a capacity-constrained allocation is an empirical question. This study compares expected uniform random allocation, treated-response ranking, a T-learner, and a three-fold cross-fitted doubly robust learner on the corrected CRITEO-UPLIFTv2 benchmark. The analysis uses 13,979,592 records from randomized advertising experiments, a fixed 60/20/20 split, and conversion as the primary outcome. Fitted models and score definitions were frozen before the evaluation routine loaded test outcome columns or joined them to predictions. Policies were then evaluated at capacities of 5\%, 10\%, 20\%, 50\%, and 100\% with held-out augmented inverse-probability-weighted value estimates. Pointwise uncertainty comes from 1,000 paired row-bootstrap replicates conditional on the fitted models. The complete-source conversion average treatment effect was 0.1152 percentage points (95\% confidence interval 0.1085 to 0.1219). At 10\% capacity, treated-response ranking exceeded expected random allocation by 77.3 incremental conversions per 100,000 test users (pointwise 95\% interval 65.1 to 90.0). Its estimated value also exceeded the T-learner by 9.0 (1.8 to 15.3) and the doubly robust learner by 29.7 (21.8 to 37.5) per 100,000. Treated-response ranking had the highest estimated conversion value at every constrained capacity; all policies were identical at 100\% by construction. These results are an offline benchmark comparison, not evidence of realized campaign impact or monetary return.
+Targeting systems often rank users by their predicted outcome under treatment, although the decision objective is the incremental effect of treatment. Whether a conditional treatment effect score improves a capacity-constrained allocation is an empirical question. This study compares expected uniform random allocation, treated-response ranking, a T-learner, and a three-fold cross-fitted doubly robust learner on the corrected CRITEO-UPLIFTv2 benchmark. The analysis uses 13,979,592 records from randomized advertising experiments, a fixed 60/20/20 split, and conversion as the primary outcome. Models and score definitions were fitted before the evaluation routine loaded test outcomes or joined them to predictions. Policies were evaluated at capacities of 5\%, 10\%, 20\%, 50\%, and 100\% with held-out augmented inverse-probability-weighted value estimates. Pointwise uncertainty comes from 1,000 paired row-bootstrap replicates conditional on the fitted models. The complete-source conversion average treatment effect was 0.1152 percentage points (95\% confidence interval 0.1085 to 0.1219). At 10\% capacity, treated-response ranking exceeded expected random allocation by 77.3 incremental conversions per 100,000 test users (pointwise 95\% interval 65.1 to 90.0). Its estimated value also exceeded the T-learner by 9.0 (1.8 to 15.3) and the doubly robust learner by 29.7 (21.8 to 37.5) per 100,000. Treated-response ranking had the highest estimated conversion value at every constrained capacity; all policies were identical at 100\% by construction. These results are an offline benchmark comparison, not evidence of realized campaign impact or monetary return.
 \end{abstract}
 
 \noindent\textbf{Keywords:} uplift modelling; heterogeneous treatment effects; policy evaluation; capacity constraints; doubly robust learning; randomized experiments
@@ -49,7 +49,7 @@ The distinction matters when only a fraction of eligible users can be treated. A
 
 This paper studies a concrete question on the corrected CRITEO-UPLIFTv2 dataset: under fixed treatment capacity, do treatment effect rankings yield higher held-out estimated incremental conversions than a treated-response ranking? Four pre-specified rules are compared: expected exact-size random allocation, ranking by predicted conversion under treatment, ranking by a T-learner effect estimate, and ranking by a cross-fitted doubly robust effect estimate. The primary endpoint is conversion. Visit is evaluated as a secondary outcome for the same conversion-based policies.
 
-The study does not introduce a new learner. It provides a reproducible case study in which the data split, model selection, ranking-score definitions, capacities, tie-breaking rule, estimands, and contrasts were fixed before the evaluation routine loaded test outcome columns or joined them to predictions. Three quantities remain separate throughout the analysis: the complete-source difference-in-means average treatment effect, held-out augmented inverse-probability-weighted (AIPW) policy value, and a centered fixed-propensity inverse-probability-weighted (IPW) Qini diagnostic. This separation prevents a ranking metric or an in-sample effect estimate from being presented as policy performance.
+The comparison fixes the data split, model selection procedure, ranking scores, capacities, tie-breaking rule, estimands, and contrasts before the evaluation routine loads test outcomes or joins them to predictions. Three quantities remain separate throughout the analysis: the complete-source difference-in-means average treatment effect, held-out augmented inverse-probability-weighted (AIPW) policy value, and a centered fixed-propensity inverse-probability-weighted (IPW) Qini diagnostic. This separation prevents a ranking metric or an in-sample effect estimate from being presented as policy performance.
 
 In this comparison, the treatment-effect scores did not rank best: treated-response ranking had the highest estimated conversion policy value at capacities from 5\% through 50\%. This result is specific to these learners, this release, and this evaluation design; it does not show that response models are generally preferable to treatment-effect models.
 
@@ -63,7 +63,7 @@ The Criteo benchmark made large randomized advertising data available for uplift
 
 \subsection{Policy choice and offline evaluation}
 
-Empirical welfare maximization frames treatment assignment as direct optimization over a policy class \citep{kitagawa2018treatment}. Related work derives policy learners and regret guarantees from semiparametric scores, including settings with budget or structural constraints \citep{athey2021policy}. Doubly robust policy evaluation combines a response model with importance weighting so that errors in one nuisance component can be offset under suitable conditions \citep{dudik2011dr}. The present experiment is simpler because assignment probability is known and constant. Its policy class is a frozen set of score rankings with exact capacity cutoffs.
+Empirical welfare maximization frames treatment assignment as direct optimization over a policy class \citep{kitagawa2018treatment}. Related work derives policy learners and regret guarantees from semiparametric scores, including settings with budget or structural constraints \citep{athey2021policy}. Doubly robust policy evaluation combines a response model with importance weighting so that errors in one nuisance component can be offset under suitable conditions \citep{dudik2011dr}. The present experiment is simpler because assignment probability is known and constant. Its policy class is a fixed set of score rankings with exact capacity cutoffs.
 
 Outcome prediction remains a meaningful comparator. \citet{fernandezloria2022causal} show that causal classification can exhibit a bias-variance tradeoff: a biased outcome score may make better treatment decisions than an estimated effect score when the latter is noisy. Their analysis gives one reason a treated-response ranking can outperform a ranking based on estimated treatment effects in finite samples, but it does not predict when this will occur.
 
@@ -155,11 +155,11 @@ The DR-learner uses three-fold cross-fitting on the combined training and valida
 +\frac{T_i}{e_0}\{C_i-\widehat m^C_{1,-f}(X_i)\}
 -\frac{1-T_i}{1-e_0}\{C_i-\widehat m^C_{0,-f}(X_i)\}.
 \]
-Both nuisance predictions exclude row $i$. A LightGBM regressor is then fitted to the out-of-fold pseudo-outcomes. Final arm-specific nuisance models use all development rows with their already selected round counts. The visit models only evaluate the frozen conversion policies; they do not generate another set of rankings.
+Both nuisance predictions exclude row $i$. A LightGBM regressor is then fitted to the out-of-fold pseudo-outcomes. Final arm-specific nuisance models use all development rows with their already selected round counts. The visit models evaluate the same conversion policies; they do not generate another set of rankings.
 
-\subsection{Locked held-out evaluation}
+\subsection{Held-out evaluation}
 
-The evaluation routine first verified hashes for the raw data, configuration, category map, fitted models, and selected rounds. It then loaded test covariates and computed score and nuisance predictions. Only after those steps did it load test outcome columns for evaluation and align them with predictions by row identifier. Evaluation required the model-freeze manifest to match the tracked repository copy and the working tree to be clean. The run manifest records that test outcomes did not enter model fitting, early stopping, score selection, or capacity selection.
+Models, ranking rules, and capacities were selected with training and validation data. The evaluation routine then loaded test covariates and computed score and nuisance predictions. Only after those predictions existed did it load test outcome columns and align them by row identifier. Test outcomes did not enter model fitting, early stopping, score selection, or capacity selection.
 
 For outcome $Y$, development-fitted nuisance models give the test-row AIPW score
 \[
@@ -196,7 +196,7 @@ The Qini coefficient is the trapezoidal area under the full-resolution centered 
 
 \subsection{Uncertainty}
 
-Uncertainty for policy values and contrasts comes from 1,000 paired nonparametric bootstrap replicates of test rows. Each replicate uses one resampled count vector for every policy and both outcomes. Exact top-$k$ membership is recomputed along each frozen ordering, and paired contrasts are formed before standard errors and percentile intervals are calculated.
+Uncertainty for policy values and contrasts comes from 1,000 paired nonparametric bootstrap replicates of test rows. Each replicate uses one resampled count vector for every policy and both outcomes. Exact top-$k$ membership is recomputed along each fitted ordering, and paired contrasts are formed before standard errors and percentile intervals are calculated.
 
 All policy intervals are pointwise 95\% percentile intervals over the five pre-specified capacities. They are conditional on the fitted models. They capture row-IID test-sample and cutoff variation but exclude model refitting, advertiser clustering, temporal drift, and simultaneous inference across capacities.
 
@@ -208,7 +208,7 @@ All structural data checks passed. The largest absolute SMD was 0.0353, for cate
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.84\textwidth]{figures/balance.png}
+\includegraphics[width=0.84\textwidth]{../results/figures/balance.png}
 \caption{Training-and-validation covariate balance. Continuous features use pooled SMDs; categorical features use the largest absolute one-versus-rest SMD across levels. The 0.1 reference line is descriptive.}
 \label{fig:balance}
 \end{figure}
@@ -228,7 +228,7 @@ Figure~\ref{fig:policy-values} shows the primary and secondary policy value esti
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\textwidth]{figures/policy_values.pdf}
+\includegraphics[width=\textwidth]{../results/figures/policy_values.png}
 \caption{Held-out AIPW policy value by treatment capacity. Policies are ranked by conversion scores; the right panel evaluates visit for those same policies. Shading gives pointwise 95\% percentile intervals from the paired row bootstrap, conditional on fitted models.}
 \label{fig:policy-values}
 \end{figure}
@@ -244,7 +244,7 @@ Paired contrasts sharpen the comparison because every policy is evaluated on the
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.82\textwidth]{figures/conversion_policy_contrasts.pdf}
+\includegraphics[width=0.82\textwidth]{../results/figures/conversion_policy_contrasts.png}
 \caption{Paired held-out conversion policy-value contrasts. Solid circles compare fitted policies with expected exact-size random allocation. Dashed squares compare the T-learner and DR-learner with treated-response. Shading gives pointwise 95\% percentile intervals from the paired row bootstrap, conditional on fitted models.}
 \label{fig:conversion-contrasts}
 \end{figure}
@@ -264,7 +264,7 @@ The centered fixed-propensity IPW Qini curves give the same ordering of the thre
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.82\textwidth]{figures/qini_curves.pdf}
+\includegraphics[width=0.82\textwidth]{../results/figures/qini_curves.png}
 \caption{Centered fixed-propensity IPW Qini curves for conversion. The displayed curves use 101 points; coefficients use the full test ordering.}
 \label{fig:qini}
 \end{figure}
@@ -295,7 +295,7 @@ Table~\ref{tab:estimator-scope} prevents three valid but different estimates fro
 
 \section{Discussion}
 
-The main empirical finding is narrow: among the four frozen rules, treated-response ranking produced the highest held-out estimated conversion policy value whenever capacity was constrained. The paired contrast intervals exclude zero at the four pre-specified constrained capacities. Among these four rules, this evidence favors treated-response for the present benchmark and model specification; it does not establish that response ranking is generally optimal.
+The main empirical finding is narrow: among the four rules, treated-response ranking produced the highest held-out estimated conversion policy value whenever capacity was constrained. The paired contrast intervals exclude zero at the four pre-specified constrained capacities. Among these four rules, this evidence favors treated-response for the present benchmark and model specification; it does not establish that response ranking is generally optimal.
 
 The result is compatible with the causal bias-variance tradeoff analyzed by \citet{fernandezloria2022causal}. A treated-response score can be biased for an individual treatment effect but still order decisions well when estimating a difference between two rare-outcome response surfaces adds enough variance. The present analysis does not identify why the response score won. It did not measure CATE ground truth, decompose ranking error, or vary model classes and training sizes. Rare conversion, arm imbalance, response-effect association, and learner specification are possible explanations, not tested mechanisms.
 
@@ -319,27 +319,21 @@ On the corrected CRITEO-UPLIFTv2 release, treated-response ranking had higher he
 
 Policy scores therefore need direct evaluation under the decision rule and capacity of interest; predictive or CATE-oriented metrics alone do not establish policy value. In this benchmark, estimating treatment effects explicitly did not guarantee the best finite-sample allocation among the tested methods. Claims beyond the released distribution require richer cost data, deployment structure, and prospective evaluation.
 
-\section*{Reproducibility and data availability}
+\section*{Code, data, and tools}
 
-Code, configuration, aggregate results, manuscript source, and provenance manifests are available in the
+Code, configuration, and aggregate results are available in the
 \href{https://github.com/felixxaxs12/budget-constrained-uplift-modelling-and-causal-policy-optimization}{public project repository}.
-The repository records the exact software versions, selected boosting rounds, data digest, and model hashes used for the reported run. Generated manuscript tables read the canonical aggregate CSV files; they do not duplicate statistical calculations.
-
 The raw Criteo dataset is not redistributed. The repository downloads the corrected artifact from the publisher and verifies its byte size, gzip integrity, ordered schema, row count, and SHA-256 digest. The dataset is licensed separately under CC BY-NC-SA 4.0 \citep{criteoDataset}. Project code is licensed under MIT, and the manuscript is licensed under CC BY 4.0.
-
-\section*{Ethics statement}
 
 This study is a secondary analysis of a public, anonymized benchmark. It collected no new participant data and assigned no new intervention. The analysis retains the publisher's anonymous feature names and reports only aggregate results. Treatment is analyzed as randomized assignment; the post-assignment exposure field is excluded from modelling.
 
-\section*{AI assistance disclosure}
-
-OpenAI Codex assisted with literature retrieval, code implementation, execution orchestration, language editing, and manuscript review. The cited sources were checked against primary or publisher records, and reported results were verified against committed aggregate artifacts. No generative output was used as research data. OpenAI Codex is not an author; responsibility for any submitted version rests with Yi Zhao.
+OpenAI Codex assisted with literature retrieval, implementation, language editing, and manuscript review. No generated data were used, and Yi Zhao is responsible for the analysis.
 
 \appendix
 
 \section{Implementation details}
 
-Table~\ref{tab:model-selection} reports the frozen boosting rounds and validation losses. Binary models use log-loss. For DR round selection, the regressor is fitted on three-fold out-of-fold training pseudo-outcomes and evaluated by mean squared error against validation pseudo-outcomes formed with train-fitted nuisance models. The final DR regressor is then fitted on three-fold out-of-fold pseudo-outcomes from the combined development sample. The fitted artifacts were produced with Python 3.13.1, LightGBM 4.7.0, NumPy 2.5.1, and pandas 3.0.5.
+Table~\ref{tab:model-selection} reports the selected boosting rounds and validation losses. Binary models use log-loss. For DR round selection, the regressor is fitted on three-fold out-of-fold training pseudo-outcomes and evaluated by mean squared error against validation pseudo-outcomes formed with train-fitted nuisance models. The final DR regressor is then fitted on three-fold out-of-fold pseudo-outcomes from the combined development sample. The fitted artifacts were produced with Python 3.13.1, LightGBM 4.7.0, NumPy 2.5.1, and pandas 3.0.5.
 
 \begin{table}[htbp]
 \centering
@@ -348,21 +342,21 @@ Table~\ref{tab:model-selection} reports the frozen boosting rounds and validatio
 \input{tables/model_selection.tex}
 \end{table}
 
-The fitted-model freeze manifest has SHA-256 digest
-\texttt{\small 140113d9dcb4bfe6bc0b4968414b5393\allowbreak 556d2f29c18a4bd8addfe9c9da5ed30a}.
-The evaluation manifest records a clean source commit, verifies the tracked freeze manifest, and confirms that predictions were created before test outcome columns were loaded for evaluation.
-
 \section{Secondary visit contrasts}
 
-Table~\ref{tab:visit-contrasts} gives the complete secondary contrast results. The directions are written as treated-response minus comparator for readability; the underlying paired estimates are preserved by sign reversal where needed.
-
-\begin{table}[htbp]
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionsetup{hypcap=false}
 \centering
-\caption{Paired visit policy-value contrasts per 100,000 eligible test users. Cells report estimate [pointwise 95\% percentile interval]. Policies are ranked by conversion scores.}
+\captionof{table}{Paired visit policy-value contrasts per 100,000 eligible test users. Policies are ranked by conversion; each contrast is treated-response minus the comparator. Cells report estimate [pointwise 95\% percentile interval].}
 \label{tab:visit-contrasts}
-\resizebox{\textwidth}{!}{\input{tables/visit_contrasts.tex}}
-\end{table}
+\resizebox{\linewidth}{!}{\input{tables/visit_contrasts.tex}}
+\end{minipage}
+\end{center}
 
+\FloatBarrier
+
+\small
 \bibliographystyle{plainnat}
 \bibliography{references}
 

@@ -76,7 +76,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
         for name in ("train_buckets", "validation_buckets", "test_buckets")
     )
     if proportions != (0.6, 0.2, 0.2):
-        raise ValueError("The frozen split must be 60/20/20")
+        raise ValueError("The split must be 60/20/20")
     return config
 
 

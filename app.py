@@ -81,16 +81,6 @@ def policy_table(
                 f"{low * 100_000:,.1f} to {high * 100_000:,.1f}"
                 for low, high in zip(selected["ci_lower"], selected["ci_upper"])
             ],
-            "Estimated incremental outcomes in test cohort": selected[
-                "test_cohort_incremental_count_estimate"
-            ],
-            "Pointwise 95% CI for cohort count": [
-                f"{low:,.1f} to {high:,.1f}"
-                for low, high in zip(
-                    selected["test_cohort_incremental_count_ci_lower"],
-                    selected["test_cohort_incremental_count_ci_upper"],
-                )
-            ],
         }
     )
 
@@ -111,46 +101,8 @@ def contrast_table(
                 f"{low * 100_000:,.1f} to {high * 100_000:,.1f}"
                 for low, high in zip(selected["ci_lower"], selected["ci_upper"])
             ],
-            "Estimated difference in test-cohort outcomes": selected[
-                "test_cohort_incremental_count_estimate"
-            ],
-            "Pointwise 95% CI for cohort difference": [
-                f"{low:,.1f} to {high:,.1f}"
-                for low, high in zip(
-                    selected["test_cohort_incremental_count_ci_lower"],
-                    selected["test_cohort_incremental_count_ci_upper"],
-                )
-            ],
         }
     )
-
-
-def hypothetical_economics(
-    policy_row: pd.Series, value_per_incremental_conversion: float, cost_per_user: float
-) -> dict[str, float]:
-    """Combine fixed study estimates with user-supplied economic assumptions."""
-
-    treatment_cost = float(policy_row["selected_rows"]) * cost_per_user
-    return {
-        "incremental_value": float(
-            policy_row["test_cohort_incremental_count_estimate"]
-        )
-        * value_per_incremental_conversion,
-        "treatment_cost": treatment_cost,
-        "net_value": float(policy_row["test_cohort_incremental_count_estimate"])
-        * value_per_incremental_conversion
-        - treatment_cost,
-        "net_value_lower": float(
-            policy_row["test_cohort_incremental_count_ci_lower"]
-        )
-        * value_per_incremental_conversion
-        - treatment_cost,
-        "net_value_upper": float(
-            policy_row["test_cohort_incremental_count_ci_upper"]
-        )
-        * value_per_incremental_conversion
-        - treatment_cost,
-    }
 
 
 def render_outcome(
@@ -160,9 +112,8 @@ def render_outcome(
     title = "Primary outcome: conversions" if outcome == "conversion" else "Secondary outcome: visits"
     st.subheader(title)
     st.caption(
-        f"Held-out policy value estimates the incremental {noun} attributable to each "
-        "allocation rule. Intervals are pointwise 95% row-bootstrap intervals based on "
-        "1,000 resamples; the same resamples are used for policy comparisons."
+        f"Held-out AIPW estimates of incremental {noun}. Intervals use 1,000 paired "
+        "row-bootstrap samples."
     )
 
     selected = rows_at_capacity(results["policy"], outcome, capacity)
@@ -177,12 +128,8 @@ def render_outcome(
     metric_a.metric("Treatment slots", f"{int(highest['selected_rows']):,}")
     metric_b.metric("Highest point estimate", highest_label)
     metric_c.metric(
-        f"Estimated incremental {noun}",
-        f"{highest['test_cohort_incremental_count_estimate']:,.1f}",
-    )
-    st.caption(
-        "“Highest point estimate” is descriptive of this held-out evaluation and is not "
-        "a guarantee of future performance."
+        f"Incremental {noun} per 100,000",
+        f"{highest['estimate'] * 100_000:,.1f}",
     )
 
     display = policy_table(results["policy"], outcome, capacity)
@@ -194,16 +141,12 @@ def render_outcome(
             "Incremental outcomes per 100,000 test users": st.column_config.NumberColumn(
                 format="%.1f"
             ),
-            "Estimated incremental outcomes in test cohort": st.column_config.NumberColumn(
-                format="%.1f"
-            ),
         },
     )
 
     st.markdown("#### Paired comparisons")
     st.caption(
-        "A positive difference favors the rule named first. These are offline estimates, "
-        "not observed differences from deploying the rules in separate campaigns."
+        "A positive difference favors the rule named first."
     )
     comparisons = contrast_table(results["contrast"], outcome, capacity)
     st.dataframe(
@@ -214,9 +157,6 @@ def render_outcome(
             "Difference per 100,000 test users": st.column_config.NumberColumn(
                 format="%.1f"
             ),
-            "Estimated difference in test-cohort outcomes": st.column_config.NumberColumn(
-                format="%.1f"
-            ),
         },
     )
 
@@ -224,7 +164,6 @@ def render_outcome(
 def main() -> None:
     st.set_page_config(
         page_title="Causal Targeting Results",
-        page_icon="◉",
         layout="wide",
     )
     st.markdown(
@@ -248,7 +187,7 @@ def main() -> None:
 
     st.title("Capacity-Constrained Causal Targeting")
     st.write(
-        "Explore the locked, held-out results from the randomized Criteo uplift benchmark. "
+        "Explore held-out results from the randomized Criteo uplift benchmark. "
         "The primary question is how four allocation rules compare when treatment can be "
         "assigned to only a fixed share of users."
     )
@@ -269,10 +208,6 @@ def main() -> None:
         help="The largest share of the fixed test cohort that the policy may select.",
     )
     capacity = CAPACITY_OPTIONS[capacity_label]
-    st.caption(
-        f"Selected capacity: {capacity_label} of the held-out cohort. Every rule receives "
-        "the same number of treatment slots."
-    )
 
     conversion_tab, visit_tab = st.tabs(["Conversions (primary)", "Visits (secondary)"])
     with conversion_tab:
@@ -314,8 +249,7 @@ def main() -> None:
 
     st.markdown("#### Qini ranking diagnostic")
     st.caption(
-        "The centered IPW Qini curve assesses conversion ranking over the full targeting "
-        "depth. Its area is a ranking diagnostic, not a policy-value or ROI estimate."
+        "The centered IPW Qini curve summarizes conversion ranking across targeting depths."
     )
     qini = results["qini"].copy()
     qini["_order"] = qini["policy"].map(POLICY_ORDER)
@@ -343,60 +277,6 @@ def main() -> None:
             str(FIGURE_DIR / "qini_curves.png"),
             caption="Centered conversion Qini curves on the held-out test cohort.",
             width="stretch",
-        )
-
-    st.divider()
-    with st.expander("Optional hypothetical economic scenario"):
-        st.warning(
-            "Criteo does not provide conversion value or treatment cost. Inputs here are "
-            "user-supplied assumptions. This calculator does not change the study results "
-            "and does not estimate realized ROI."
-        )
-        scenario_policy = st.selectbox(
-            "Allocation rule",
-            options=list(POLICY_LABELS),
-            format_func=POLICY_LABELS.get,
-        )
-        scenario_left, scenario_right = st.columns(2)
-        with scenario_left:
-            conversion_value = st.number_input(
-                "Hypothetical value per incremental conversion",
-                min_value=0.0,
-                value=0.0,
-                step=1.0,
-                help="Enter any consistent currency unit.",
-            )
-        with scenario_right:
-            treatment_cost = st.number_input(
-                "Hypothetical treatment cost per selected user",
-                min_value=0.0,
-                value=0.0,
-                step=0.01,
-                help="Use the same currency unit as conversion value.",
-            )
-
-        selected_policy = rows_at_capacity(
-            results["policy"], "conversion", capacity
-        ).loc[lambda frame: frame["name"] == scenario_policy].iloc[0]
-        scenario = hypothetical_economics(
-            selected_policy, conversion_value, treatment_cost
-        )
-        if conversion_value == 0.0 and treatment_cost == 0.0:
-            st.caption("Enter assumptions above to calculate a hypothetical scenario.")
-        scenario_a, scenario_b, scenario_c = st.columns(3)
-        scenario_a.metric(
-            "Value from estimated incremental conversions",
-            f"{scenario['incremental_value']:,.2f}",
-        )
-        scenario_b.metric(
-            "Treatment cost for selected users", f"{scenario['treatment_cost']:,.2f}"
-        )
-        scenario_c.metric("Hypothetical net value", f"{scenario['net_value']:,.2f}")
-        st.caption(
-            "Pointwise interval implied by the conversion-count interval and fixed user "
-            f"inputs: {scenario['net_value_lower']:,.2f} to "
-            f"{scenario['net_value_upper']:,.2f} currency units. It does not include "
-            "uncertainty in the user-supplied economic assumptions."
         )
 
     st.divider()

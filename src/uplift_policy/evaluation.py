@@ -1,4 +1,4 @@
-"""Statistical evaluation for the locked uplift-policy protocol."""
+"""Statistical evaluation for capacity-constrained uplift policies."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from numpy.typing import ArrayLike, NDArray
 DEFAULT_PROPENSITY = 0.85
 DEFAULT_TIE_SEED = 20260803
 SCORE_POLICIES = ("response", "t_learner", "dr_learner")
-LOCKED_CONTRASTS = (
+POLICY_CONTRASTS = (
     ("response_minus_random", "response", "random"),
     ("t_learner_minus_random", "t_learner", "random"),
     ("dr_learner_minus_random", "dr_learner", "random"),
@@ -96,7 +96,7 @@ def binary_ate(
     treatment: ArrayLike,
     confidence: float = 0.95,
 ) -> ATEEstimate:
-    """Difference in binary means with the locked analytic standard error."""
+    """Difference in binary means with an analytic standard error."""
     y, t = _aligned_1d(outcome, treatment)
     y = y.astype(np.float64, copy=False)
     if not np.isin(y, (0.0, 1.0)).all() or not np.isin(t, (0, 1)).all():
@@ -168,7 +168,7 @@ def top_k_membership(
     capacity: float,
     seed: int = DEFAULT_TIE_SEED,
 ) -> NDArray[np.bool_]:
-    """Return exact membership for the frozen batch top-k policy."""
+    """Return exact membership for a batch top-k policy."""
     order = policy_order(scores, row_id, seed)
     selected = np.zeros(order.size, dtype=np.bool_)
     selected[order[: capacity_count(order.size, capacity)]] = True
@@ -195,13 +195,13 @@ def expected_random_value(aipw: ArrayLike, capacity: float) -> float:
     return capacity_count(psi.size, capacity) / psi.size * float(psi.mean())
 
 
-def locked_contrasts(
+def policy_contrasts(
     policy_values: Mapping[str, float | NDArray[np.float64]],
 ) -> dict[str, float | NDArray[np.float64]]:
     """Form the five pre-specified paired policy contrasts."""
     return {
         name: policy_values[left] - policy_values[right]
-        for name, left, right in LOCKED_CONTRASTS
+        for name, left, right in POLICY_CONTRASTS
     }
 
 
@@ -329,7 +329,7 @@ def paired_row_bootstrap(
     confidence: float = 0.95,
     keep_replicates: bool = False,
 ) -> PairedBootstrapResult:
-    """Evaluate frozen policies with one paired row bootstrap for all outcomes."""
+    """Evaluate fitted policies with one paired row bootstrap for all outcomes."""
     if set(scores) != set(SCORE_POLICIES):
         raise ValueError(f"scores must contain exactly {SCORE_POLICIES}")
     if not aipw_by_outcome:
@@ -425,10 +425,10 @@ def paired_row_bootstrap(
         for outcome_index, outcome in enumerate(outcome_names)
     }
     point_contrasts = {
-        outcome: locked_contrasts(values) for outcome, values in point_values.items()
+        outcome: policy_contrasts(values) for outcome, values in point_values.items()
     }
     replicate_contrasts = {
-        outcome: locked_contrasts(values)
+        outcome: policy_contrasts(values)
         for outcome, values in replicate_values.items()
     }
 

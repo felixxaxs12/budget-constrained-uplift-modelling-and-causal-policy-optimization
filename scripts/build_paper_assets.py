@@ -1,11 +1,9 @@
-"""Build manuscript tables and copy figures from canonical aggregate results."""
+"""Build the manuscript tables from saved aggregate results."""
 
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
-import shutil
 from pathlib import Path
 
 
@@ -13,7 +11,6 @@ ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "results"
 PAPER = ROOT / "paper"
 TABLES = PAPER / "tables"
-FIGURES = PAPER / "figures"
 CAPACITIES = (0.05, 0.10, 0.20, 0.50, 1.00)
 POLICIES = ("random", "response", "t_learner", "dr_learner")
 POLICY_LABELS = {
@@ -28,14 +25,6 @@ OUTCOME_LABELS = {"conversion": "Conversion", "visit": "Visit"}
 def read_csv(name: str) -> list[dict[str, str]]:
     with (RESULTS / "tables" / name).open(newline="", encoding="utf-8") as stream:
         return list(csv.DictReader(stream))
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1 << 20), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def write(name: str, text: str) -> Path:
@@ -57,7 +46,7 @@ def keyed(rows: list[dict[str, str]], fields: tuple[str, ...]) -> dict[tuple[str
     for row in rows:
         key = tuple(row[field] for field in fields)
         if key in result:
-            raise ValueError(f"Duplicate canonical row: {key}")
+            raise ValueError(f"Duplicate result row: {key}")
         result[key] = row
     return result
 
@@ -239,8 +228,8 @@ def build_qini_table() -> Path:
 
 
 def build_model_table() -> Path:
-    manifest_path = RESULTS / "manifests" / "model_freeze.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    metadata_path = RESULTS / "model_metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     labels = {
         "conversion_m0": r"Conversion $\widehat m_0$",
         "conversion_m1": r"Conversion $\widehat m_1$",
@@ -256,8 +245,8 @@ def build_model_table() -> Path:
     ]
     for key in ("conversion_m0", "conversion_m1", "visit_m0", "visit_m1", "dr_learner"):
         lines.append(
-            f"{labels[key]} & {manifest['selected_rounds'][key]} & "
-            f"{manifest['validation_losses'][key]:.6f} \\\\"
+            f"{labels[key]} & {metadata['selected_rounds'][key]} & "
+            f"{metadata['validation_losses'][key]:.6f} \\\\"
         )
     lines.extend((r"\bottomrule", r"\end{tabular}"))
     return write("model_selection.tex", "\n".join(lines))
@@ -265,9 +254,7 @@ def build_model_table() -> Path:
 
 def main() -> None:
     TABLES.mkdir(parents=True, exist_ok=True)
-    FIGURES.mkdir(parents=True, exist_ok=True)
-
-    generated = [
+    for builder in (
         build_sample_table(),
         build_ate_table(),
         build_estimator_scope_table(),
@@ -276,39 +263,8 @@ def main() -> None:
         build_contrast_table("visit", "visit_contrasts.tex"),
         build_qini_table(),
         build_model_table(),
-    ]
-
-    figure_names = (
-        "balance.png",
-        "policy_values.pdf",
-        "conversion_policy_contrasts.pdf",
-        "qini_curves.pdf",
-    )
-    copied: list[Path] = []
-    for name in figure_names:
-        source = RESULTS / "figures" / name
-        target = FIGURES / name
-        shutil.copyfile(source, target)
-        copied.append(target)
-
-    source_files = [
-        RESULTS / "tables" / name
-        for name in (
-            "sample_summary.csv",
-            "average_treatment_effects.csv",
-            "policy_values.csv",
-            "policy_contrasts.csv",
-            "qini_coefficients.csv",
-        )
-    ] + [RESULTS / "manifests" / "model_freeze.json"]
-    manifest = {
-        "description": "Paper assets derived from canonical aggregate results without statistical recomputation.",
-        "sources": {str(path.relative_to(ROOT)): sha256(path) for path in source_files},
-        "assets": {str(path.relative_to(ROOT)): sha256(path) for path in generated + copied},
-    }
-    (PAPER / "assets_manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    ):
+        print(builder.relative_to(ROOT))
 
 
 if __name__ == "__main__":
